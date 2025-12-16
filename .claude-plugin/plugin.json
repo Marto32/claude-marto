@@ -1,0 +1,8 @@
+{
+  "name": "claude-marto-toolkit",
+  "description": "Claude Code extension toolkit with 11 specialized subagents, a skill-creator skill, and code explanation commands",
+  "version": "1.0.0",
+  "author": {
+    "name": "Michael Martorella"
+  }
+}

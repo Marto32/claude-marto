@@ -1,167 +1,120 @@
-# My Claude Code Configuration
+# Claude Marto Toolkit
 
-This directory contains my personal Claude Code setup including skills, agents, commands, and other configuration files.
+A comprehensive Claude Code plugin providing specialized subagents, skills, and commands for software development workflows.
+
+## Installation
+
+```bash
+/plugin install claude-marto-toolkit
+```
+
+Or install from source:
+```bash
+/plugin install /path/to/claude-marto
+```
+
+## What's Included
+
+### Agents (11 specialized subagents)
+
+Invoke with `@agent-name` in Claude Code:
+
+| Agent | Description | Category |
+|-------|-------------|----------|
+| `@system-architect` | System architecture and scalability design | Engineering |
+| `@backend-architect` | Backend systems, APIs, and database design | Engineering |
+| `@frontend-architect` | UI/UX, accessibility, and frontend performance | Engineering |
+| `@security-engineer` | Security vulnerabilities and compliance | Quality |
+| `@performance-engineer` | Performance optimization and bottleneck analysis | Quality |
+| `@refactoring-expert` | Code quality and technical debt reduction | Quality |
+| `@requirements-analyst` | Requirements discovery and PRD creation | Analysis |
+| `@deep-research-agent` | Comprehensive research and investigation | Analysis |
+| `@tech-stack-researcher` | Technology choices and architecture planning | Analysis |
+| `@learning-guide` | Code explanation and programming education | Communication |
+| `@technical-writer` | Technical documentation creation | Communication |
+
+### Skills
+
+| Skill | Description |
+|-------|-------------|
+| `skill-creator` | Guide for creating effective Claude skills with templates and validation |
+
+The skill-creator skill includes:
+- `init_skill.py` - Initialize new skill directories with templates
+- `package_skill.py` - Package skills into distributable .skill files
+- `quick_validate.py` - Validate skill structure and frontmatter
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `/code-explain` | Comprehensive code explanation with visual diagrams, step-by-step breakdowns, and learning paths |
 
 ## Directory Structure
 
 ```
-~/.claude/
-├── skills/           # Agent Skills (model-invoked)
-├── agents/           # Subagents (user-invoked)
-├── commands/         # Slash commands (user-invoked)
-├── hooks/            # Event handlers
-└── settings.json     # Configuration file
+claude-marto/
+├── .claude-plugin/
+│   └── plugin.json           # Plugin manifest
+├── agents/                    # Specialized subagents
+│   ├── system-architect.md
+│   ├── backend-architect.md
+│   ├── frontend-architect.md
+│   ├── tech-stack-researcher.md
+│   ├── deep-research-agent.md
+│   ├── security-engineer.md
+│   ├── performance-engineer.md
+│   ├── requirements-analyst.md
+│   ├── refactoring-expert.md
+│   ├── learning-guide.md
+│   └── technical-writer.md
+├── skills/
+│   └── skill-creator/         # Skill creation toolkit
+│       ├── SKILL.md
+│       ├── scripts/
+│       └── references/
+├── commands/
+│   └── code-explain.md        # Code explanation command
+└── README.md
 ```
 
-## What Goes Where?
+## Usage Examples
 
-### Skills (`skills/`)
-**Model-invoked** - Claude automatically uses these when relevant to your task.
+### Using Agents
 
-- Each skill is a folder with a `SKILL.md` file
-- Claude reads these dynamically based on task context
-- Include YAML frontmatter with `name` and `description`
-- Best for: domain expertise, procedural knowledge, workflows
-
-**Example structure:**
 ```
-skills/
-└── my-skill/
-    ├── SKILL.md           # Main instructions
-    ├── scripts/           # Optional executables
-    ├── references/        # Optional documentation
-    └── assets/            # Optional resources
+@system-architect Design a scalable microservices architecture for an e-commerce platform
 ```
 
-**Learn more:**
+```
+@security-engineer Review this authentication implementation for vulnerabilities
+```
+
+```
+@refactoring-expert Help me reduce technical debt in the user service module
+```
+
+### Using Skills
+
+The skill-creator skill activates automatically when you ask Claude to help create a new skill:
+
+```
+Help me create a new skill for PDF processing
+```
+
+### Using Commands
+
+```
+/code-explain src/auth/jwt.ts
+```
+
+## Resources
+
+- [Claude Code Plugins Documentation](https://code.claude.com/docs/en/plugins)
 - [Agent Skills Guide](https://code.claude.com/docs/en/skills)
-- [Agent Skills Blog](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)
-- [Skills Explained](https://claude.com/blog/skills-explained)
-
-### Agents (`agents/`)
-**User-invoked** - You explicitly call these with `@agent-name` or via commands.
-
-- Specialized AI assistants with their own context and tool permissions
-- Operate independently and return results
-- Best for: discrete tasks, specific workflows, parallel workers
-
-**Example:**
-```markdown
-# agents/code-reviewer.md
-
-You are a code review specialist focused on security and quality.
-Your role is to review pull requests and provide actionable feedback...
-```
-
-**Learn more:**
 - [Subagents Documentation](https://code.claude.com/docs/en/sub-agents)
-
-### Commands (`commands/`)
-**User-invoked** - You type `/command-name` to trigger these.
-
-- Saved prompts that start workflows
-- Can invoke agents for structured tasks
-- Best for: frequently-used workflows, quick shortcuts
-
-**Example:**
-```markdown
-# commands/review.md
----
-description: Review code for security and quality issues
----
-
-Please review the code in this repository for security vulnerabilities
-and code quality issues. Provide actionable feedback.
-```
-
-**Learn more:**
 - [Slash Commands](https://code.claude.com/docs/en/slash-commands)
 
-### Hooks (`hooks/`)
-Event handlers that trigger automatically on certain actions.
+## License
 
-**Learn more:**
-- [Hooks Guide](https://code.claude.com/docs/en/hooks-guide)
-
-## Quick Reference: When to Use What?
-
-| Need | Use |
-|------|-----|
-| Auto-triggered expertise | **Skill** |
-| Explicit task delegation | **Agent** |
-| Quick workflow shortcut | **Command** |
-| Shared across projects | **Skill** |
-| Specific tool permissions | **Agent** |
-| Frequently typed prompt | **Command** |
-
-## Key Principles
-
-1. **Skills teach, Agents execute** - If multiple agents need the same knowledge, make it a skill
-2. **All are markdown** - Same format, different invocation patterns
-3. **Portable and shareable** - Copy/paste between projects or share with team
-4. **Descriptions matter** - For skills especially, clear descriptions help Claude know when to use them
-
-## Installation & Plugins
-
-You can install pre-built skills, agents, and commands via plugins:
-
-```bash
-# Add a marketplace
-/plugin marketplace add anthropics/skills
-
-# Browse available plugins
-/plugin
-
-# Install a plugin
-/plugin install plugin-name@marketplace-name
-```
-
-**Learn more:**
-- [Plugins Guide](https://code.claude.com/docs/en/plugins)
-- [Plugin Marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)
-
-## Useful Resources
-
-### Official Documentation
-- [Claude Code Docs](https://code.claude.com/docs)
-- [Claude Developer Platform](https://docs.claude.com)
-- [Anthropic Skills Cookbook](https://github.com/anthropics/skills)
-
-### Community Resources
-- [Anthropic Skills Repository](https://github.com/anthropics/skills)
-- [Model Context Protocol (MCP)](https://code.claude.com/docs/en/mcp)
-
-### Tips & Best Practices
-- Start with evaluation - identify gaps before building
-- Keep skills modular and focused
-- Use progressive disclosure in SKILL.md files
-- Test changes incrementally
-- Only use trusted sources for plugins
-
-## Getting Started
-
-1. **Create your first skill:**
-   ```bash
-   mkdir -p ~/.claude/skills/my-skill
-   # Edit SKILL.md with your instructions
-   ```
-
-2. **Test it:**
-   Ask Claude something that matches your skill's description
-
-3. **Verify it loaded:**
-   ```bash
-   /skills list
-   ```
-
-## Notes
-
-- Files are discovered automatically - no restart needed (usually)
-- Skills can include executable Python/shell scripts
-- Agents can invoke skills during their work
-- Commands can invoke agents for planning
-- Everything works together as a system
-
----
-
-*Last updated: December 2024*
+MIT License
