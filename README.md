@@ -4,18 +4,64 @@ A comprehensive Claude Code plugin providing specialized subagents, skills, and 
 
 ## Installation
 
-```bash
-/plugin install claude-marto-toolkit
-```
+### From Local Path
 
-Or install from source:
+If you have this repository cloned locally:
+
 ```bash
 /plugin install /path/to/claude-marto
 ```
 
+### From GitHub
+
+```bash
+/plugin install github:username/claude-marto
+```
+
+### Via Project Settings
+
+Add directly to your project's `.claude/settings.json`:
+
+```json
+{
+  "plugins": {
+    "installed": [
+      {
+        "name": "claude-marto-toolkit",
+        "source": "github:username/claude-marto"
+      }
+    ]
+  }
+}
+```
+
+### Installation Scopes
+
+| Scope | Location | Behavior |
+|-------|----------|----------|
+| `user` | `~/.claude/settings.json` | Available in all projects (default) |
+| `project` | `.claude/settings.json` | Shared with team via git |
+| `local` | `.claude/settings.local.json` | Project-specific, gitignored |
+
+```bash
+# Install to specific scope
+/plugin install /path/to/claude-marto --scope user
+/plugin install /path/to/claude-marto --scope project
+/plugin install /path/to/claude-marto --scope local
+```
+
+### Verify Installation
+
+After installing, verify with:
+```bash
+/help
+```
+
+You should see the `/code-explain` command listed and can invoke agents like `@system-architect`.
+
 ## What's Included
 
-### Agents (11 specialized subagents)
+### Agents (13 specialized subagents)
 
 Invoke with `@agent-name` in Claude Code:
 
@@ -24,6 +70,8 @@ Invoke with `@agent-name` in Claude Code:
 | `@system-architect` | System architecture and scalability design | Engineering |
 | `@backend-architect` | Backend systems, APIs, and database design | Engineering |
 | `@frontend-architect` | UI/UX, accessibility, and frontend performance | Engineering |
+| `@prototype-designer` | Single-machine prototype design and rapid POCs | Engineering |
+| `@ic4` | Implementation orchestrator with tests and documentation | Engineering |
 | `@security-engineer` | Security vulnerabilities and compliance | Quality |
 | `@performance-engineer` | Performance optimization and bottleneck analysis | Quality |
 | `@refactoring-expert` | Code quality and technical debt reduction | Quality |
@@ -60,6 +108,8 @@ claude-marto/
 │   ├── system-architect.md
 │   ├── backend-architect.md
 │   ├── frontend-architect.md
+│   ├── prototype-designer.md
+│   ├── ic4.md
 │   ├── tech-stack-researcher.md
 │   ├── deep-research-agent.md
 │   ├── security-engineer.md

@@ -1,0 +1,51 @@
+flowchart TD
+    %% This is a template flowchart showing a typical process workflow
+    %% Modify the node IDs, labels, and flow to match your use case
+
+    %% Start node (rounded rectangle)
+    Start([Start Process])
+
+    %% Process steps (rectangles)
+    Step1[Receive Input]
+    Step2[Validate Data]
+    Step3[Process Information]
+    Step4[Generate Output]
+
+    %% Decision point (diamond)
+    Decision{Is Valid?}
+
+    %% Error handling (rectangle)
+    ErrorHandler[Handle Error]
+    ErrorLog[Log Error Details]
+
+    %% End node (rounded rectangle)
+    Success([Process Complete])
+    Failure([Process Failed])
+
+    %% Define the flow with arrows
+    Start --> Step1
+    Step1 --> Step2
+    Step2 --> Decision
+
+    %% Decision branches
+    Decision -->|Yes| Step3
+    Decision -->|No| ErrorHandler
+
+    %% Error flow
+    ErrorHandler --> ErrorLog
+    ErrorLog --> Failure
+
+    %% Success flow
+    Step3 --> Step4
+    Step4 --> Success
+
+    %% Optional: Add a retry path
+    ErrorHandler -.->|Retry| Step2
+
+    %% Styling - customize colors to match your needs
+    style Start fill:#90EE90,stroke:#2d5016,stroke-width:2px
+    style Success fill:#90EE90,stroke:#2d5016,stroke-width:2px
+    style Failure fill:#FFB6C1,stroke:#8b0000,stroke-width:2px
+    style ErrorHandler fill:#FFB6C1,stroke:#8b0000,stroke-width:2px
+    style Decision fill:#FFD700,stroke:#b8860b,stroke-width:2px
+    style Step3 fill:#87CEEB,stroke:#4682b4,stroke-width:2px

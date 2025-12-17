@@ -1,0 +1,40 @@
+{
+  "name": "claude-marto-marketplace",
+  "owner": {
+    "name": "Michael Martorella"
+  },
+  "metadata": {
+    "description": "Claude Code plugins and tools for comprehensive software development workflows",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "claude-marto-toolkit",
+      "source": ".",
+      "description": "Comprehensive Claude Code extension with 13 specialized subagents, skill-creator toolkit, and code explanation commands for software development workflows",
+      "version": "1.0.0",
+      "author": {
+        "name": "Michael Martorella"
+      },
+      "homepage": "https://github.com/Marto32/claude-marto#readme",
+      "repository": "https://github.com/Marto32/claude-marto",
+      "license": "MIT",
+      "keywords": [
+        "agents",
+        "architecture",
+        "backend",
+        "frontend",
+        "security",
+        "performance",
+        "refactoring",
+        "requirements",
+        "research",
+        "documentation",
+        "prototyping",
+        "development-tools"
+      ],
+      "category": "development",
+      "strict": true
+    }
+  ]
+}
