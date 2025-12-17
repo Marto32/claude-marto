@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "claude-marto-toolkit",
-      "source": ".",
+      "source": "./",
       "description": "Comprehensive Claude Code extension with 13 specialized subagents, skill-creator toolkit, and code explanation commands for software development workflows",
       "version": "1.0.0",
       "author": {
