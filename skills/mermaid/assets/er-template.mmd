@@ -1,0 +1,84 @@
+erDiagram
+    %% This is a template ER diagram showing database schema
+    %% Modify entities, attributes, and relationships to match your database
+
+    %% Define entities with their attributes
+    CUSTOMER {
+        int id PK "Primary key"
+        string first_name "Customer first name"
+        string last_name "Customer last name"
+        string email "Unique email address"
+        string phone "Contact number"
+        date registered_at "Registration timestamp"
+        boolean is_active "Account status"
+    }
+
+    ORDER {
+        int id PK "Primary key"
+        int customer_id FK "Foreign key to CUSTOMER"
+        date order_date "When order was placed"
+        string status "Order status"
+        decimal total_amount "Total order value"
+        string shipping_address "Delivery address"
+        date shipped_at "Shipping timestamp"
+    }
+
+    ORDER_ITEM {
+        int id PK "Primary key"
+        int order_id FK "Foreign key to ORDER"
+        int product_id FK "Foreign key to PRODUCT"
+        int quantity "Number of items"
+        decimal unit_price "Price per unit"
+        decimal subtotal "Line item total"
+    }
+
+    PRODUCT {
+        int id PK "Primary key"
+        string sku "Stock keeping unit"
+        string name "Product name"
+        string description "Product details"
+        decimal price "Current price"
+        int stock_quantity "Available inventory"
+        int category_id FK "Foreign key to CATEGORY"
+        boolean is_active "Product visibility"
+    }
+
+    CATEGORY {
+        int id PK "Primary key"
+        string name "Category name"
+        string description "Category description"
+        int parent_category_id FK "For nested categories"
+    }
+
+    PAYMENT {
+        int id PK "Primary key"
+        int order_id FK "Foreign key to ORDER"
+        string payment_method "Payment type"
+        decimal amount "Payment amount"
+        string transaction_id "External reference"
+        date processed_at "Payment timestamp"
+        string status "Payment status"
+    }
+
+    %% Define relationships between entities
+    %% Cardinality: ||--|| (one to one)
+    %%             ||--o{ (one to many)
+    %%             }o--o{ (many to many)
+
+    %% One-to-many: One customer can have many orders
+    CUSTOMER ||--o{ ORDER : "places"
+
+    %% One-to-many: One order contains many order items
+    ORDER ||--|{ ORDER_ITEM : "contains"
+
+    %% Many-to-one: Many order items reference one product
+    PRODUCT ||--o{ ORDER_ITEM : "ordered in"
+
+    %% One-to-many: One category contains many products
+    CATEGORY ||--o{ PRODUCT : "has"
+
+    %% One-to-one: One order has one payment
+    ORDER ||--|| PAYMENT : "paid by"
+
+    %% Self-referencing: Categories can have parent categories
+    CATEGORY ||--o{ CATEGORY : "parent of"

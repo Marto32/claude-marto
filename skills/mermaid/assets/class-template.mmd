@@ -1,0 +1,99 @@
+classDiagram
+    %% This is a template class diagram showing object-oriented design
+    %% Modify classes, properties, and relationships to match your system
+
+    %% Abstract base class
+    class Entity {
+        <<abstract>>
+        #int id
+        #Date createdAt
+        #Date updatedAt
+        +getId() int
+        +save() void
+        +delete() void*
+    }
+
+    %% Concrete classes that inherit from Entity
+    class User {
+        -String username
+        -String email
+        -String passwordHash
+        +List~Role~ roles
+        +authenticate(password) boolean
+        +updateProfile(data) void
+        +hasRole(role) boolean
+    }
+
+    class Product {
+        +String name
+        +String description
+        +decimal price
+        +int stockQuantity
+        +List~Category~ categories
+        +updatePrice(newPrice) void
+        +adjustStock(amount) void
+        +isAvailable() boolean
+    }
+
+    %% Supporting classes
+    class Order {
+        +String orderNumber
+        +Date orderDate
+        +String status
+        +decimal totalAmount
+        +calculateTotal() decimal
+        +addItem(item) void
+        +removeItem(item) void
+        +processPayment() boolean
+    }
+
+    class OrderItem {
+        +int quantity
+        +decimal unitPrice
+        +decimal subtotal
+        +calculateSubtotal() decimal
+    }
+
+    %% Interface
+    class PaymentProcessor {
+        <<interface>>
+        +processPayment(amount)*
+        +refund(amount)*
+        +validatePaymentMethod()*
+    }
+
+    %% Enum
+    class OrderStatus {
+        <<enumeration>>
+        PENDING
+        CONFIRMED
+        SHIPPED
+        DELIVERED
+        CANCELLED
+    }
+
+    %% Relationships
+    %% Inheritance (generalization)
+    Entity <|-- User
+    Entity <|-- Product
+    Entity <|-- Order
+
+    %% Composition (strong ownership - Order owns OrderItems)
+    Order *-- OrderItem
+
+    %% Aggregation (weak ownership - User has Orders but they can exist independently)
+    User o-- Order
+
+    %% Association (Product referenced by OrderItem)
+    OrderItem --> Product
+
+    %% Implementation (Order implements PaymentProcessor)
+    PaymentProcessor <|.. Order
+
+    %% Dependency (Order depends on OrderStatus)
+    Order ..> OrderStatus
+
+    %% Cardinality (multiplicty) on relationships
+    User "1" --> "*" Order : places
+    Order "1" *-- "*" OrderItem : contains
+    Product "1" --> "*" OrderItem : ordered in

@@ -1,8 +1,26 @@
 {
   "name": "claude-marto-toolkit",
-  "description": "Claude Code extension toolkit with 11 specialized subagents, a skill-creator skill, and code explanation commands",
+  "description": "Comprehensive Claude Code extension with 13 specialized subagents, skill-creator toolkit, and code explanation commands for software development workflows",
   "version": "1.0.0",
   "author": {
     "name": "Michael Martorella"
-  }
+  },
+  "license": "MIT",
+  "repository": "https://github.com/Marto32/claude-marto",
+  "homepage": "https://github.com/Marto32/claude-marto#readme",
+  "keywords": [
+    "agents",
+    "architecture",
+    "backend",
+    "frontend",
+    "security",
+    "performance",
+    "refactoring",
+    "requirements",
+    "research",
+    "documentation",
+    "prototyping",
+    "development-tools"
+  ],
+  "category": "development"
 }

@@ -1,0 +1,59 @@
+sequenceDiagram
+    %% This is a template sequence diagram showing API interaction
+    %% Modify participants and messages to match your system
+
+    %% Define participants (actors and systems)
+    actor User
+    participant Client as Client App
+    participant API as API Server
+    participant Auth as Auth Service
+    participant DB as Database
+
+    %% Main interaction flow
+    User->>+Client: Initiates Action
+    Note over Client: Validate input locally
+
+    %% API call with authentication
+    Client->>+API: POST /api/resource
+    Note right of API: Receives request
+
+    %% Authentication check
+    API->>+Auth: Validate Token
+    Auth-->>-API: Token Valid
+
+    %% Conditional flow based on authentication
+    alt Authenticated
+        %% Success path with database interaction
+        API->>+DB: Query Data
+        activate DB
+        Note over DB: Execute query
+        DB-->>-API: Return Results
+        deactivate DB
+
+        API-->>Client: 200 OK + Data
+        Client-->>-User: Display Result
+
+        Note over User,Client: Success state
+
+    else Not Authenticated
+        %% Error path
+        API-->>Client: 401 Unauthorized
+        Client-->>User: Show Error Message
+
+        Note over User,Client: Error state
+
+        %% Optional retry logic
+        opt User Retries
+            User->>Client: Retry with new credentials
+            Client->>API: POST /api/resource
+        end
+    end
+
+    deactivate API
+
+    %% Optional: Show cleanup or background tasks
+    rect rgb(200, 220, 250)
+    Note over API,DB: Async background task
+    API->>DB: Log activity
+    DB-->>API: Logged
+    end
