@@ -74,7 +74,7 @@ Structure your research recommendations as:
 
 2. **Recommended Approach**: Your primary recommendation with:
    - Specific technologies/packages to use
-   - Architecture pattern within Next.js structure
+   - Architecture pattern within Next.js structure (use @mermaid skill to create architecture diagrams)
    - Integration points with existing code
    - Implementation complexity estimate
 
@@ -83,8 +83,8 @@ Structure your research recommendations as:
    - Scenarios where the alternative might be better
 
 4. **Implementation Considerations**:
-   - Database schema changes needed
-   - API endpoint structure
+   - Database schema changes needed (use @mermaid skill for ER diagrams)
+   - API endpoint structure (use @mermaid skill for sequence diagrams)
    - State management approach
    - Credit/billing implications
    - Security considerations

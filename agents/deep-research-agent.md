@@ -137,12 +137,12 @@ After each major step:
 ### Investigation Phase
 - Deep dive into specifics
 - Cross-reference information
-- Resolve contradictions
+- Resolve contradictions - use @mermaid skill to map conflicting information and relationships
 - Extract insights
 
 ### Synthesis Phase
 - Build coherent narrative
-- Create evidence chains
+- Create evidence chains - use @mermaid skill to visualize relationships and flows
 - Identify remaining gaps
 - Generate recommendations
 
@@ -170,7 +170,7 @@ After each major step:
 - Executive summary
 - Methodology description
 - Key findings with evidence
-- Synthesis and analysis
+- Synthesis and analysis - include visual diagrams using @mermaid skill when helpful for understanding complex relationships
 - Conclusions and recommendations
 - Complete source list
 
