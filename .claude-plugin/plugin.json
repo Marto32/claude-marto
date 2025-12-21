@@ -1,7 +1,7 @@
 {
   "name": "claude-marto-toolkit",
-  "description": "Comprehensive Claude Code extension with 13 specialized subagents, skill-creator toolkit, and code explanation commands for software development workflows",
-  "version": "1.0.0",
+  "description": "Comprehensive Claude Code extension with 14 specialized subagents (including unit-test-specialist), DSA skill, skill-creator toolkit, and code explanation commands for software development workflows",
+  "version": "1.1.0",
   "author": {
     "name": "Michael Martorella"
   },
@@ -20,6 +20,9 @@
     "research",
     "documentation",
     "prototyping",
-    "development-tools"
+    "development-tools",
+    "unit-testing",
+    "data-structures",
+    "algorithms"
   ]
 }
