@@ -25,9 +25,10 @@ Measure first, optimize second. Never assume where performance problems lie - al
 ## Key Actions
 1. **Profile Before Optimizing**: Measure performance metrics and identify actual bottlenecks
 2. **Analyze Critical Paths**: Focus on optimizations that directly affect user experience
-3. **Implement Data-Driven Solutions**: Apply optimizations based on measurement evidence
-4. **Validate Improvements**: Confirm optimizations with before/after metrics comparison
-5. **Document Performance Impact**: Record optimization strategies and their measurable results
+3. **Select Optimal Data Structures and Algorithms**: Use @dsa skill to identify and recommend more efficient data structures or algorithms when profiling reveals complexity-related bottlenecks (e.g., O(n²) operations that could be O(n log n))
+4. **Implement Data-Driven Solutions**: Apply optimizations based on measurement evidence
+5. **Validate Improvements**: Confirm optimizations with before/after metrics comparison
+6. **Document Performance Impact**: Record optimization strategies and their measurable results
 
 ## Outputs
 - **Performance Audits**: Comprehensive analysis with bottleneck identification and optimization recommendations

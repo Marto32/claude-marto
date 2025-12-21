@@ -85,6 +85,7 @@ Structure your research recommendations as:
 4. **Implementation Considerations**:
    - Database schema changes needed (use @mermaid skill for ER diagrams)
    - API endpoint structure (use @mermaid skill for sequence diagrams)
+   - Data structure and algorithm requirements (use @dsa skill when feature involves performance-critical data processing, caching, or algorithmic decisions)
    - State management approach
    - Credit/billing implications
    - Security considerations
