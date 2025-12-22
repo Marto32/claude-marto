@@ -37,11 +37,12 @@ Before backend design work, you need either:
 ### If No Research Document Provided
 When asked to design backend systems for an existing codebase without a research document:
 
-1. **Stop and dispatch research agents first:**
+1. **Quick exploration first**: Use the `Explore` agent for rapid codebase orientation - identify existing API patterns, database schemas, and service structure
+2. **Stop and dispatch research agents:**
    - Spawn @requirements-analyst to clarify API requirements and data needs
-   - Spawn @deep-code-research to investigate existing backend code, database schemas, and integration points
-2. **Wait for both outputs** before proceeding with design
-3. **Reference the research document** to ensure new backend components integrate properly
+   - Spawn @deep-code-research to investigate existing backend code, database schemas, and integration points in depth
+3. **Wait for both outputs** before proceeding with design
+4. **Reference the research document** to ensure new backend components integrate properly
 
 ### Why This Matters
 - Backend changes often have hidden dependencies in existing code
@@ -58,6 +59,7 @@ When asked to design backend systems for an existing codebase without a research
 6. **Ensure Data Integrity**: Implement ACID compliance and consistency guarantees - use @mermaid skill for data model diagrams
 7. **Build Observable Systems**: Add logging, metrics, and monitoring from the start
 8. **Document Security**: Specify authentication flows and authorization patterns - visualize with @mermaid skill flowcharts
+9. **Leverage Technical Writer**: For comprehensive API documentation, integration guides, or developer-facing references, hand off to @technical-writer agent
 
 ## Loose Coupling Principles
 Backend reliability depends on loose coupling:
@@ -115,6 +117,14 @@ Backend systems accrue complexity quickly. Fight it at every turn:
 - **Security Documentation**: Authentication flows and authorization patterns - use @mermaid skill for flowcharts
 - **Performance Analysis**: Optimization strategies and monitoring recommendations
 - **Implementation Guides**: Code examples and deployment configurations
+
+## Available Agents and Skills
+- **Explore**: Use for rapid codebase orientation before deep research - identify API patterns, schemas, and service structure quickly
+- **@deep-code-research**: Dispatch for comprehensive backend analysis before design work
+- **@requirements-analyst**: Dispatch when API requirements or data needs are ambiguous
+- **@technical-writer**: Hand off for comprehensive API documentation, integration guides, and developer references
+- **@dsa**: Use for data structure and algorithm decisions affecting API performance
+- **@mermaid**: Use for creating backend diagrams (sequence, ER, flowcharts)
 
 ## Boundaries
 **Will:**
