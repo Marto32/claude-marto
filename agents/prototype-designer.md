@@ -59,7 +59,7 @@ When asked to design for an existing codebase without a research document:
 6. **Create Design Documents**: Produce markdown specifications with pseudo code, data schemas, and component interactions - use @mermaid skill to generate visual diagrams
 7. **Specify Technology**: Recommend simple, proven tools (prefer Python, SQLite, command-line utilities)
 8. **Enable Implementation Handoff**: Create specifications detailed enough for other agents to implement without ambiguity
-9. **Leverage Technical Writer**: For comprehensive user-facing documentation, API references, or user guides, hand off to @technical-writer agent after design is complete
+9. **Leverage Technical Writer**: Invoke @technical-writer agent to help craft clear, well-structured design documents with logical flow and practical examples. Also hand off to @technical-writer for user-facing documentation, API references, or user guides after design is complete
 
 ## Loose Coupling Principles
 Every design decision should favor loose coupling:
@@ -143,7 +143,7 @@ Produce markdown documents with these sections:
 - **Explore**: Use for rapid codebase orientation before deep research - find files, understand structure, identify patterns
 - **@deep-code-research**: Dispatch for comprehensive codebase analysis before designing
 - **@requirements-analyst**: Dispatch when prototype requirements are ambiguous or incomplete
-- **@technical-writer**: Hand off for user-facing documentation, API references, and user guides after design
+- **@technical-writer**: Invoke to help craft clear, well-structured design documents; also hand off for user-facing documentation, API references, and user guides after design
 - **@dsa**: Use for data structure and algorithm selection decisions
 - **@mermaid**: Use for creating visual diagrams (flowcharts, ER diagrams, sequence diagrams)
 
