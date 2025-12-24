@@ -61,7 +61,7 @@ You should see the `/code-explain` command listed and can invoke agents like `@s
 
 ## What's Included
 
-### Agents (13 specialized subagents)
+### Agents (16 specialized subagents)
 
 Invoke with `@agent-name` in Claude Code:
 
@@ -72,14 +72,17 @@ Invoke with `@agent-name` in Claude Code:
 | `@frontend-architect` | UI/UX, accessibility, and frontend performance | Engineering |
 | `@prototype-designer` | Single-machine prototype design and rapid POCs | Engineering |
 | `@ic4` | Implementation orchestrator with tests and documentation | Engineering |
+| `@cook` | Design-to-implementation orchestrator with research and verification | Orchestration |
 | `@security-engineer` | Security vulnerabilities and compliance | Quality |
 | `@performance-engineer` | Performance optimization and bottleneck analysis | Quality |
 | `@refactoring-expert` | Code quality and technical debt reduction | Quality |
 | `@requirements-analyst` | Requirements discovery and PRD creation | Analysis |
 | `@deep-research-agent` | Comprehensive research and investigation | Analysis |
+| `@deep-code-research` | Deep codebase analysis for design and implementation | Analysis |
 | `@tech-stack-researcher` | Technology choices and architecture planning | Analysis |
 | `@learning-guide` | Code explanation and programming education | Communication |
 | `@technical-writer` | Technical documentation creation | Communication |
+| `@unit-test-specialist` | Comprehensive unit testing with 95%+ coverage | Engineering |
 
 ### Skills
 
@@ -105,19 +108,22 @@ claude-marto/
 ├── .claude-plugin/
 │   └── plugin.json           # Plugin manifest
 ├── agents/                    # Specialized subagents
-│   ├── system-architect.md
 │   ├── backend-architect.md
-│   ├── frontend-architect.md
-│   ├── prototype-designer.md
-│   ├── ic4.md
-│   ├── tech-stack-researcher.md
+│   ├── cook.md
+│   ├── deep-code-research.md
 │   ├── deep-research-agent.md
-│   ├── security-engineer.md
-│   ├── performance-engineer.md
-│   ├── requirements-analyst.md
-│   ├── refactoring-expert.md
+│   ├── frontend-architect.md
+│   ├── ic4.md
 │   ├── learning-guide.md
-│   └── technical-writer.md
+│   ├── performance-engineer.md
+│   ├── prototype-designer.md
+│   ├── refactoring-expert.md
+│   ├── requirements-analyst.md
+│   ├── security-engineer.md
+│   ├── system-architect.md
+│   ├── tech-stack-researcher.md
+│   ├── technical-writer.md
+│   └── unit-test-specialist/
 ├── skills/
 │   └── skill-creator/         # Skill creation toolkit
 │       ├── SKILL.md
