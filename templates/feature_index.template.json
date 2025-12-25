@@ -1,0 +1,45 @@
+{
+  "_readme": "This file is always small (<50 lines). Read this first for quick orientation.",
+  
+  "project_name": "PROJECT_NAME",
+  "last_updated": "YYYY-MM-DDTHH:MM:SSZ",
+  
+  "totals": {
+    "total": 50,
+    "completed": 0,
+    "remaining": 50,
+    "percent_complete": 0
+  },
+  
+  "next_priority": {
+    "id": 1,
+    "title": "User can register with email and password",
+    "category": "authentication"
+  },
+  
+  "blockers": [],
+  "known_issues": [],
+  "regressions": [],
+  
+  "categories": {
+    "authentication": { "total": 5, "done": 0, "percent": 0 },
+    "user_management": { "total": 10, "done": 0, "percent": 0 },
+    "core_features": { "total": 20, "done": 0, "percent": 0 },
+    "admin": { "total": 10, "done": 0, "percent": 0 },
+    "error_handling": { "total": 5, "done": 0, "percent": 0 }
+  },
+  
+  "files": {
+    "active_features": "feature_list.json",
+    "completed_features": ".claude/archives/completed_features.json",
+    "progress_log": "claude-progress.txt",
+    "progress_archive": ".claude/archives/"
+  },
+  
+  "last_session": {
+    "number": 1,
+    "date": "YYYY-MM-DD",
+    "features_completed": [],
+    "agent": "@initializer"
+  }
+}

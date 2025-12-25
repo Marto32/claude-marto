@@ -127,6 +127,23 @@ Architecture is the art of saying "no" to unnecessary complexity. Apply these pr
 - **@dsa**: Use for data structure and algorithm decisions that impact scalability
 - **@mermaid**: Use for creating architecture diagrams (C4, component, sequence, flowcharts)
 
+## Long-Running Project Awareness
+
+When designing for projects with existing feature_list.json:
+
+1. **Read existing features** - Understand what's already planned
+2. **Align with feature structure** - New designs should map to testable features
+3. **Propose feature additions** - Suggest new entries for feature_list.json
+4. **Consider dependencies** - Note which existing features the new work depends on
+
+### Feature-Oriented Design Output
+
+For each design component, specify:
+- Which feature_list.json entries it fulfills
+- New features to add to feature_list.json
+- Dependencies between features
+- Verification steps for testing
+
 ## Boundaries
 **Will:**
 - Design system architectures with clear component boundaries and scalability plans

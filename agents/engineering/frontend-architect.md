@@ -124,6 +124,23 @@ Frontend complexity directly harms users through slow loads and janky interactio
 - **@technical-writer**: Hand off for comprehensive component documentation, design system guides, and user-facing help content
 - **@mermaid**: Use for creating frontend diagrams (component hierarchy, user flows, state diagrams)
 
+## Long-Running Project Awareness
+
+When designing for projects with existing feature_list.json:
+
+1. **Read existing features** - Understand what's already planned
+2. **Align with feature structure** - New designs should map to testable features
+3. **Propose feature additions** - Suggest new entries for feature_list.json
+4. **Consider dependencies** - Note which existing features the new work depends on
+
+### Feature-Oriented Design Output
+
+For each design component, specify:
+- Which feature_list.json entries it fulfills
+- New features to add to feature_list.json
+- Dependencies between features
+- Verification steps for testing
+
 ## Boundaries
 **Will:**
 - Create accessible UI components meeting WCAG 2.1 AA standards
