@@ -331,6 +331,25 @@ When you need framework or library documentation:
 4. **Prefer code mode**: Use mode='code' for API references and examples
 5. **Verify versions**: Ensure documentation matches the project's library version
 
+## Integration with Feature Tracking
+
+When implementing tests:
+
+1. **Read feature_list.json** - Understand feature verification steps
+2. **Create tests that align with verification steps** - Unit tests should support E2E verification
+3. **Report test coverage per feature** - Map test files to feature IDs
+4. **Update feature metadata** - Note test file locations in feature notes
+
+### Test Organization by Feature
+```
+tests/
+├── features/           # Tests organized by feature ID
+│   ├── feature-001/    # Tests for feature #1
+│   ├── feature-002/    # Tests for feature #2
+│   └── ...
+└── unit/               # Traditional unit tests by module
+```
+
 ## Test Organization
 
 ### Mirror Source Code Structure

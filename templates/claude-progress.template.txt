@@ -1,0 +1,93 @@
+# Project: PROJECT_NAME
+# Last Updated: YYYY-MM-DD HH:MM UTC
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  QUICK STATUS — Read this section at every session start (lines 1-25)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+#  Total: 50 | Done: 0 | Remaining: 50 | Progress: 0%
+#
+#  NEXT FEATURE: #1 - User can register with email and password
+#  BLOCKERS: None
+#  KNOWN ISSUES: None
+#  REGRESSIONS: None
+#
+#  Quick Commands:
+#    Start env:    ./init.sh
+#    Run tests:    npm test
+#    View app:     http://localhost:3000
+#    Next feature: cat feature_list.json | jq '.features[0]'
+#
+# ═══════════════════════════════════════════════════════════════════════════
+
+## Recent Sessions (last 10 kept here, older archived)
+
+---
+
+### Session 001 - YYYY-MM-DD HH:MM UTC
+
+**Agent:** @initializer
+
+**Work Completed:**
+- Created project structure
+- Generated 50 features in feature_list.json
+- Set up development environment in init.sh
+- Initialized git repository
+
+**Features Completed:** None (initialization session)
+
+**Git Commits:**
+- `abc1234`: "Initial project setup by @initializer"
+
+**Issues:** None
+
+**Next Session Should:**
+1. Implement feature #1 - User registration
+2. Run initial smoke tests
+
+---
+
+<!-- 
+═══════════════════════════════════════════════════════════════════════════
+ SESSION TEMPLATE — Copy for each new session
+═══════════════════════════════════════════════════════════════════════════
+
+### Session XXX - YYYY-MM-DD HH:MM UTC
+
+**Agent:** @cook / @ic4
+
+**Work Completed:**
+- [What was done]
+
+**Features Completed:**
+- #X - [title] ✅
+
+**Git Commits:**
+- `hash`: "message"
+
+**Issues:** [Any problems encountered]
+
+**Next Session Should:**
+1. [Next priority]
+
+---
+
+═══════════════════════════════════════════════════════════════════════════
+-->
+
+<!-- 
+═══════════════════════════════════════════════════════════════════════════
+ ARCHIVE NOTICE
+═══════════════════════════════════════════════════════════════════════════
+ 
+ When this file exceeds 500 lines or contains more than 10 sessions:
+ 1. Move older sessions to: .claude/archives/progress-sessions-XXX-YYY.txt
+ 2. Update the header status
+ 3. Keep only the last 10 sessions in this file
+ 
+ Archive command:
+   tail -n +100 claude-progress.txt >> .claude/archives/progress-archive.txt
+   head -100 claude-progress.txt > temp.txt && mv temp.txt claude-progress.txt
+
+═══════════════════════════════════════════════════════════════════════════
+-->

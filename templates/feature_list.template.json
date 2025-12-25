@@ -1,0 +1,66 @@
+{
+  "project_name": "PROJECT_NAME",
+  "description": "Brief project description",
+  "created_at": "2025-01-15T00:00:00Z",
+  "last_updated": "2025-01-15T00:00:00Z",
+  
+  "_readme": "SCALABILITY: This file contains ONLY incomplete features. Completed features are archived to .claude/archives/completed_features.json. Always read 'summary' first, not the full features array.",
+  
+  "summary": {
+    "total_features": 50,
+    "completed": 0,
+    "remaining": 50,
+    "completion_percent": 0,
+    "next_priority_id": 1,
+    "archive_file": ".claude/archives/completed_features.json",
+    "categories": {
+      "authentication": { "total": 5, "done": 0 },
+      "user_management": { "total": 10, "done": 0 },
+      "core_features": { "total": 20, "done": 0 },
+      "admin": { "total": 10, "done": 0 },
+      "error_handling": { "total": 5, "done": 0 }
+    }
+  },
+
+  "features": [
+    {
+      "id": 1,
+      "category": "authentication",
+      "priority": 1,
+      "title": "User can register with email and password",
+      "description": "New users can create an account by providing email and password.",
+      "verification_steps": [
+        "Navigate to /register page",
+        "Verify registration form is displayed",
+        "Enter valid email address",
+        "Enter password meeting requirements",
+        "Click Register button",
+        "Verify success message or redirect"
+      ],
+      "dependencies": [],
+      "passes": false,
+      "implemented_at": null,
+      "verified_at": null,
+      "git_commit": null
+    },
+    {
+      "id": 2,
+      "category": "authentication",
+      "priority": 2,
+      "title": "User can login with email and password",
+      "description": "Registered users can login to access the application.",
+      "verification_steps": [
+        "Navigate to /login page",
+        "Enter valid registered email",
+        "Enter correct password",
+        "Click Login button",
+        "Verify redirect to dashboard"
+      ],
+      "dependencies": [1],
+      "passes": false,
+      "implemented_at": null,
+      "verified_at": null,
+      "git_commit": null
+    }
+  ]
+}

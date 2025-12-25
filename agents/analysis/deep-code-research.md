@@ -29,6 +29,13 @@ Investigate like an archaeologist. Assume nothing - verify everything by reading
 
 ## Key Actions
 
+### 0. Check Session State First
+Before deep investigation:
+1. Read claude-progress.txt for context on recent work
+2. Check git log for recent changes
+3. Review feature_list.json for what's been implemented
+4. Note any known issues from previous sessions
+
 ### 1. Scope the Investigation
 Based on the user's prompt, determine:
 - **Target Area**: Which part of the codebase to investigate
@@ -75,6 +82,12 @@ Produce a markdown research document structured for consumption by design agents
 
 ## Executive Summary
 [2-3 sentences: What was investigated and key findings]
+
+## Session Context
+- **Previous Session:** [summary from claude-progress.txt]
+- **Recent Commits:** [from git log]
+- **Features Completed:** [from feature_list.json]
+- **Known Issues:** [from progress notes]
 
 ## Investigation Scope
 - **Target Area**: [What part of codebase]

@@ -1,12 +1,58 @@
 # Claude Marto Toolkit
 
-A comprehensive Claude Code plugin providing specialized subagents, skills, and commands for software development workflows.
+A structured agent system for long-running software development with session continuity and GitHub Issues integration.
+
+## Overview
+
+This toolkit solves a fundamental problem with AI-assisted development: **context windows are finite, but projects are not**.
+
+When Claude runs out of context mid-project, it loses track of what's done, what's remaining, and what state the code is in. This system creates persistent artifacts that survive across sessions, enabling coherent multi-session development.
+
+**Key Principle:** GitHub Issues are the source of truth. Local files are synced working copies that agents read/write during sessions.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        GitHub Issues                            │
+│                      (Source of Truth)                          │
+│  Issue #1: User login ✓    Issue #2: Password reset (open)     │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼ ./github-sync.sh pull
+┌─────────────────────────────────────────────────────────────────┐
+│                        Local Files                              │
+│  feature_list.json │ feature_index.json │ claude-progress.txt  │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+            ┌──────────────────┼──────────────────┐
+            ▼                  ▼                  ▼
+     ┌───────────┐      ┌───────────┐      ┌───────────┐
+     │   @cook   │      │   @ic4    │      │ @verifier │
+     │ orchestrate│      │ implement │      │  verify   │
+     └───────────┘      └───────────┘      └───────────┘
+                               │
+                               ▼ ./github-sync.sh push-status
+┌─────────────────────────────────────────────────────────────────┐
+│                     GitHub Issues Updated                       │
+│  Issue #1: ✓ closed    Issue #2: status:verified → closed      │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ## Installation
 
-### From Local Path
+### Prerequisites
 
-If you have this repository cloned locally:
+```bash
+# Install GitHub CLI
+brew install gh  # macOS
+# or: https://cli.github.com/
+
+# Authenticate
+gh auth login
+```
+
+### From Local Path
 
 ```bash
 /plugin install /path/to/claude-marto
@@ -20,7 +66,7 @@ If you have this repository cloned locally:
 
 ### Via Project Settings
 
-Add directly to your project's `.claude/settings.json`:
+Add to your project's `.claude/settings.json`:
 
 ```json
 {
@@ -35,141 +81,207 @@ Add directly to your project's `.claude/settings.json`:
 }
 ```
 
-### Installation Scopes
-
-| Scope | Location | Behavior |
-|-------|----------|----------|
-| `user` | `~/.claude/settings.json` | Available in all projects (default) |
-| `project` | `.claude/settings.json` | Shared with team via git |
-| `local` | `.claude/settings.local.json` | Project-specific, gitignored |
-
-```bash
-# Install to specific scope
-/plugin install /path/to/claude-marto --scope user
-/plugin install /path/to/claude-marto --scope project
-/plugin install /path/to/claude-marto --scope local
-```
-
 ### Verify Installation
 
-After installing, verify with:
 ```bash
 /help
 ```
 
 You should see the `/code-explain` command listed and can invoke agents like `@system-architect`.
 
-## What's Included
+## Quick Start
 
-### Agents (16 specialized subagents)
+### New Project
 
-Invoke with `@agent-name` in Claude Code:
+```bash
+# 1. Create/clone your repo
+git clone https://github.com/you/my-project && cd my-project
 
-| Agent | Description | Category |
-|-------|-------------|----------|
-| `@system-architect` | System architecture and scalability design | Engineering |
-| `@backend-architect` | Backend systems, APIs, and database design | Engineering |
-| `@frontend-architect` | UI/UX, accessibility, and frontend performance | Engineering |
-| `@prototype-designer` | Single-machine prototype design and rapid POCs | Engineering |
-| `@ic4` | Implementation orchestrator with tests and documentation | Engineering |
-| `@cook` | Design-to-implementation orchestrator with research and verification | Orchestration |
-| `@security-engineer` | Security vulnerabilities and compliance | Quality |
-| `@performance-engineer` | Performance optimization and bottleneck analysis | Quality |
-| `@refactoring-expert` | Code quality and technical debt reduction | Quality |
-| `@requirements-analyst` | Requirements discovery and PRD creation | Analysis |
-| `@deep-research-agent` | Comprehensive research and investigation | Analysis |
-| `@deep-code-research` | Deep codebase analysis for design and implementation | Analysis |
-| `@tech-stack-researcher` | Technology choices and architecture planning | Analysis |
-| `@learning-guide` | Code explanation and programming education | Communication |
-| `@technical-writer` | Technical documentation creation | Communication |
-| `@unit-test-specialist` | Comprehensive unit testing with 95%+ coverage | Engineering |
+# 2. Run @initializer with your design doc
+# (In Claude) "Initialize this project for long-running development"
+
+# 3. Start developing
+./github-sync.sh pull    # Sync from GitHub
+./init.sh                # Start environment
+# (In Claude) "Implement the next feature"
+```
+
+### Existing Project
+
+```bash
+# 1. Navigate to your project
+cd my-existing-project
+
+# 2. Run @retrofitter
+# (In Claude) "Retrofit this project for session continuity"
+
+# 3. Continue developing as normal
+```
+
+## Agents
+
+Invoke with `@agent-name` in Claude Code.
+
+### Which Agent When?
+
+| Situation | Agent |
+|-----------|-------|
+| Starting a brand new project | `@initializer` |
+| Adding tracking to existing project | `@retrofitter` |
+| Implementing the next feature | `@cook` → `@ic4` |
+| Verifying a feature works | `@verifier` |
+| Understanding existing code | `@deep-code-research` |
+| Requirements are unclear | `@requirements-analyst` |
+| Designing a system/feature | `@prototype-designer`, `@backend-architect`, `@frontend-architect` |
+
+### Orchestration
+
+| Agent | Description |
+|-------|-------------|
+| `@initializer` | First-run project setup, creates GitHub Issues |
+| `@retrofitter` | Add session tracking to existing projects |
+| `@cook` | Design-to-implementation orchestrator with session protocols |
+
+### Engineering
+
+| Agent | Description |
+|-------|-------------|
+| `@system-architect` | System architecture and scalability design |
+| `@backend-architect` | Backend systems, APIs, and database design |
+| `@frontend-architect` | UI/UX, accessibility, and frontend performance |
+| `@prototype-designer` | Single-machine prototype design and rapid POCs |
+| `@ic4` | Implementation orchestrator with tests and session protocol |
+| `@unit-test-specialist` | Comprehensive unit testing with 95%+ coverage |
+
+### Quality
+
+| Agent | Description |
+|-------|-------------|
+| `@verifier` | End-to-end verification with browser automation |
+| `@security-engineer` | Security vulnerabilities and compliance |
+| `@performance-engineer` | Performance optimization and bottleneck analysis |
+| `@refactoring-expert` | Code quality and technical debt reduction |
+
+### Analysis
+
+| Agent | Description |
+|-------|-------------|
+| `@requirements-analyst` | Requirements discovery and PRD creation |
+| `@deep-research-agent` | Comprehensive research and investigation |
+| `@deep-code-research` | Deep codebase analysis for design and implementation |
+| `@tech-stack-researcher` | Technology choices and architecture planning |
+
+### Communication
+
+| Agent | Description |
+|-------|-------------|
+| `@learning-guide` | Code explanation and programming education |
+| `@technical-writer` | Technical documentation creation |
+
+## Workflows
+
+### Typical Development Loop
+
+```
+Session Start:
+  ./github-sync.sh pull
+  cat feature_index.json
+  ./init.sh
+
+Development:
+  @cook  →  Picks next feature
+    └→ @deep-code-research (if needed)
+    └→ @ic4  →  Implements feature
+    └→ @verifier  →  Verifies & closes issue
+
+Session End:
+  git commit
+  ./github-sync.sh push-status
+```
+
+### Parallel Backend + Frontend
+
+```
+@backend-architect  ──┬──  @ic4 (backend)  ──┐
+                      │                       ├──  @verifier
+@frontend-architect ──┴──  @ic4 (frontend) ──┘
+```
+
+## Session Protocols
+
+### Session Start (Mandatory)
+
+```bash
+./github-sync.sh pull           # Sync from GitHub
+cat feature_index.json          # Check status
+head -40 claude-progress.txt    # Recent history
+./init.sh                       # Start environment
+```
+
+### Session End (Mandatory)
+
+```bash
+git add . && git commit -m "Session N: [summary]"
+./github-sync.sh push-status    # Update GitHub labels
+./github-sync.sh close-verified # Close completed issues
+```
+
+## File Reference
+
+| File | Purpose | How to Read |
+|------|---------|-------------|
+| `feature_index.json` | Quick status (<50 lines) | `cat feature_index.json` |
+| `feature_list.json` | All features with details | `jq` filters only |
+| `claude-progress.txt` | Session history | `head -40` |
+
+## Skills & Commands
 
 ### Skills
 
 | Skill | Description |
 |-------|-------------|
-| `skill-creator` | Guide for creating effective Claude skills with templates and validation |
-
-The skill-creator skill includes:
-- `init_skill.py` - Initialize new skill directories with templates
-- `package_skill.py` - Package skills into distributable .skill files
-- `quick_validate.py` - Validate skill structure and frontmatter
+| `skill-creator` | Guide for creating effective Claude skills |
 
 ### Commands
 
 | Command | Description |
 |---------|-------------|
-| `/code-explain` | Comprehensive code explanation with visual diagrams, step-by-step breakdowns, and learning paths |
+| `/code-explain` | Code explanation with diagrams and learning paths |
 
 ## Directory Structure
 
 ```
 claude-marto/
-├── .claude-plugin/
-│   └── plugin.json           # Plugin manifest
-├── agents/                    # Specialized subagents
-│   ├── backend-architect.md
-│   ├── cook.md
-│   ├── deep-code-research.md
-│   ├── deep-research-agent.md
-│   ├── frontend-architect.md
-│   ├── ic4.md
-│   ├── learning-guide.md
-│   ├── performance-engineer.md
-│   ├── prototype-designer.md
-│   ├── refactoring-expert.md
-│   ├── requirements-analyst.md
-│   ├── security-engineer.md
-│   ├── system-architect.md
-│   ├── tech-stack-researcher.md
-│   ├── technical-writer.md
-│   └── unit-test-specialist/
+├── agents/
+│   ├── orchestration/     # @cook, @initializer, @retrofitter
+│   ├── engineering/       # @ic4, @backend-architect, etc.
+│   ├── quality/           # @verifier, @security-engineer, etc.
+│   ├── analysis/          # @deep-code-research, etc.
+│   └── communication/     # @learning-guide, @technical-writer
 ├── skills/
-│   └── skill-creator/         # Skill creation toolkit
-│       ├── SKILL.md
-│       ├── scripts/
-│       └── references/
+│   └── skill-creator/
 ├── commands/
-│   └── code-explain.md        # Code explanation command
+│   └── code-explain.md
 └── README.md
 ```
 
-## Usage Examples
+## Key Rules
 
-### Using Agents
+| Rule | Wrong | Right |
+|------|-------|-------|
+| One feature at a time | "Implement features 1-10" | Implement #1 → verify → close → then #2 |
+| Verify before closing | Mark done because code looks complete | Run @verifier → screenshots → close |
+| Always sync | Start working without syncing | `./github-sync.sh pull` first |
+| Clean state | Leave uncommitted changes | Commit everything at session end |
 
-```
-@system-architect Design a scalable microservices architecture for an e-commerce platform
-```
+## Troubleshooting
 
-```
-@security-engineer Review this authentication implementation for vulnerabilities
-```
-
-```
-@refactoring-expert Help me reduce technical debt in the user service module
-```
-
-### Using Skills
-
-The skill-creator skill activates automatically when you ask Claude to help create a new skill:
-
-```
-Help me create a new skill for PDF processing
-```
-
-### Using Commands
-
-```
-/code-explain src/auth/jwt.ts
-```
-
-## Resources
-
-- [Claude Code Plugins Documentation](https://code.claude.com/docs/en/plugins)
-- [Agent Skills Guide](https://code.claude.com/docs/en/skills)
-- [Subagents Documentation](https://code.claude.com/docs/en/sub-agents)
-- [Slash Commands](https://code.claude.com/docs/en/slash-commands)
+| Problem | Solution |
+|---------|----------|
+| `gh: command not found` | `brew install gh` or [cli.github.com](https://cli.github.com/) |
+| Not authenticated | `gh auth login` |
+| Files out of sync | `./github-sync.sh pull` |
+| Context running out | Commit WIP, add notes to claude-progress.txt |
 
 ## License
 
