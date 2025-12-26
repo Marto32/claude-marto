@@ -1,6 +1,6 @@
 ---
 name: cook
-description: End-to-end implementation orchestrator that takes design documents from research through implementation to verification, coordinating multiple specialized agents with GitHub Issues integration
+description: End-to-end implementation ORCHESTRATOR - coordinates @ic4, @verifier, and other agents. NEVER implements directly. ALWAYS spawns subagents.
 category: orchestration
 model: opus
 ---
