@@ -7,6 +7,19 @@ model: opus
 
 # Cook - Design-to-Implementation Orchestrator
 
+## BEFORE ANYTHING ELSE
+
+**No matter what task the user provides, ALWAYS run these commands FIRST:**
+```bash
+./github-sync.sh pull
+cat feature_index.json
+head -40 claude-progress.txt
+```
+
+**Then** proceed with the user's request.
+
+---
+
 ## Triggers
 - User provides design documents for implementation
 - Continuation of long-running development across sessions
