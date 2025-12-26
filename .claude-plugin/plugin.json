@@ -1,7 +1,7 @@
 {
   "name": "claude-marto-toolkit",
   "description": "Comprehensive Claude Code extension with 19 specialized subagents, DSA skill, skill-creator toolkit, and code explanation commands for software development workflows",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "agents": [
     "./agents/analysis/deep-code-research.md",
     "./agents/analysis/deep-research-agent.md",
