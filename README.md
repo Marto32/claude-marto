@@ -12,6 +12,213 @@ When Claude runs out of context mid-project, it loses track of what's done, what
 
 **Design Philosophy:** Human-in-the-loop at every stage. Architects produce designs for human review. Implementation plans are approved before execution. Code reviews catch issues before merge.
 
+## Two Commands to Rule Them All
+
+Most workflows use just two commands:
+
+### `/spec` — Design with Auto-Review
+
+```bash
+/spec <type> <context>
+```
+
+Creates an architectural design and automatically reviews it for quality.
+
+| Type | What It Designs |
+|------|-----------------|
+| `system` | High-level architecture (service boundaries, data flow, scalability) |
+| `backend` | APIs, databases, security, reliability patterns |
+| `frontend` | UI components, accessibility, state management |
+
+**What happens:**
+1. Spawns the appropriate architect agent (@system-architect, @backend-architect, or @frontend-architect)
+2. Architect creates design doc → `docs/design/{type}-design-{name}-{date}.md`
+3. Automatically spawns @principal-architect to review the design
+4. Review produces feedback → `docs/design/feedback/{name}-feedback.md`
+5. Returns verdict: **APPROVED** / **APPROVED WITH CONDITIONS** / **REVISION REQUIRED**
+
+```bash
+# Examples
+/spec system docs/prd/user-auth.md
+/spec backend "Design REST API for user management with OAuth2"
+/spec frontend docs/design/backend-api.md "Create React components"
+```
+
+### `/cook` — Execute Implementation Plan
+
+```bash
+/cook <implementation-plan.md>
+```
+
+Executes an implementation plan end-to-end with TDD and auto-review.
+
+**What happens:**
+1. Parses the implementation plan (from @implementation-planner)
+2. Spawns @deep-code-research to understand the codebase
+3. Spawns @ic4 agents for each task (TDD: tests first, then implement)
+4. Spawns @verifier to confirm everything works
+5. Automatically runs code review on completed work
+
+```bash
+# Example
+/cook docs/implementation_plans/implementation-plan-auth-2024-01-15.md
+```
+
+### The Complete Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  /spec system docs/prd/feature.md                                       │
+│     └→ Creates system design + auto-review                              │
+│                                                                         │
+│  /spec backend docs/design/system-design.md                             │
+│     └→ Creates backend design + auto-review                             │
+│                                                                         │
+│  /spec frontend docs/design/system-design.md                            │
+│     └→ Creates frontend design + auto-review                            │
+│                                                                         │
+│  @implementation-planner docs/design/backend-design.md                  │
+│     └→ Creates implementation plan with atomic tasks                    │
+│                                                                         │
+│  /cook docs/implementation_plans/plan.md                                │
+│     └→ Implements everything with TDD + auto code review                │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+## Walkthrough: Building a Task API from Scratch
+
+Here's a complete example of building a working app with this toolkit.
+
+### Step 1: Write Your PRD
+
+```bash
+mkdir -p docs/prd
+```
+
+Create a simple requirements doc at `docs/prd/task-api.md`:
+
+```markdown
+## Task Management API
+
+### Requirements
+- Users can create, read, update, delete tasks
+- Tasks have: title, description, status (todo/in-progress/done), due date
+- REST API with JSON responses
+- SQLite database for simplicity
+- Basic input validation
+
+### Non-Functional
+- Response time < 200ms
+- Handle 100 concurrent users
+```
+
+### Step 2: Design the System
+
+```bash
+/spec system docs/prd/task-api.md
+```
+
+**What happens:**
+1. @system-architect creates `docs/design/system-design-task-api-*.md`
+2. @principal-architect reviews and creates `docs/design/feedback/*-feedback.md`
+3. Returns verdict — review both files before proceeding
+
+### Step 3: Design the Backend
+
+```bash
+/spec backend docs/prd/task-api.md docs/design/system-design-task-api-*.md
+```
+
+**What happens:**
+1. @backend-architect creates `docs/design/backend-design-task-api-*.md` with:
+   - API endpoints (GET/POST/PUT/DELETE /tasks)
+   - Database schema
+   - Error handling patterns
+2. @principal-architect reviews against the PRD
+3. Returns verdict — approve or request changes
+
+### Step 4: Create Implementation Plan
+
+```bash
+@implementation-planner docs/design/backend-design-task-api-*.md
+```
+
+**Output:** `docs/implementation_plans/implementation-plan-task-api-*.md`
+
+```markdown
+1.0 Database Layer [SEQUENTIAL]
+  1.1 Create SQLite schema [S]
+  1.2 Create Task model [S]
+  1.3 Create TaskRepository [M]
+
+2.0 API Layer [SEQUENTIAL after 1.0]
+  2.1 Create Express app setup [S]
+  2.2 Implement POST /tasks [M]
+  2.3 Implement GET /tasks [S]
+  ...
+```
+
+Review and approve the plan before proceeding.
+
+### Step 5: Build It
+
+```bash
+/cook docs/implementation_plans/implementation-plan-task-api-*.md
+```
+
+**What happens:**
+1. @cook orchestrates everything
+2. @ic4 writes tests first, then implements each task
+3. @verifier confirms the API works
+4. Code review runs automatically
+5. Returns working code with tests
+
+### Step 6: Ship It
+
+```bash
+git add .
+git commit -m "Implement Task Management API"
+```
+
+### What You Get
+
+```
+my-task-app/
+├── docs/
+│   ├── prd/task-api.md                      # Requirements
+│   ├── design/
+│   │   ├── system-design-task-api-*.md      # Architecture
+│   │   ├── backend-design-task-api-*.md     # API design
+│   │   └── feedback/*-feedback.md           # Review feedback
+│   ├── implementation_plans/
+│   │   └── implementation-plan-*.md         # Task breakdown
+│   └── code_review/review-*.md              # Code review
+├── src/
+│   ├── models/task.js
+│   ├── repositories/taskRepository.js
+│   ├── routes/tasks.js
+│   └── app.js
+├── tests/
+│   ├── models/task.test.js
+│   ├── repositories/taskRepository.test.js
+│   └── routes/tasks.test.js
+└── package.json
+```
+
+### Shorter Workflows
+
+**Skip system design for smaller features:**
+```bash
+/spec backend "Add a /health endpoint that returns {status: 'ok'}"
+@implementation-planner docs/design/backend-design-health-*.md
+/cook docs/implementation_plans/implementation-plan-health-*.md
+```
+
+**Use @ic4 directly for tiny changes:**
+```bash
+@ic4 "Add a createdAt timestamp to the Task model. Write tests first."
+```
+
 ## Architecture
 
 ```
@@ -64,10 +271,24 @@ This toolkit is designed for **human-in-the-loop development**. Each stage produ
 │ Agent: @backend-architect       │ │ Agent: @frontend-architect      │
 │ Input: System design from above │ │ Input: System design from above │
 │ Output: API specs, DB schemas   │ │ Output: Component specs, UI/UX  │
-│ Human Review: ✓ Approve APIs    │ │ Human Review: ✓ Approve UI      │
 └─────────────────────────────────┘ └─────────────────────────────────┘
                     │                               │
                     └───────────────┬───────────────┘
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STAGE 2C: DESIGN REVIEW                                                     │
+│ Agent: @principal-architect                                                 │
+│ Input: Design docs from 2A/2B + PRD                                         │
+│ Output: Feedback in docs/design/feedback/ with verdict                      │
+│ Human Review: ✓ Review findings, decide if revision needed                  │
+│                                                                             │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │ VERDICT: APPROVED           → Proceed to Stage 3                    │   │
+│   │ VERDICT: APPROVED W/CONDITIONS → Fix conditions, then Stage 3       │   │
+│   │ VERDICT: REVISION REQUIRED  → Human routes back to 2A/2B            │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ STAGE 3: IMPLEMENTATION PLANNING                                            │
@@ -104,7 +325,14 @@ For features that don't need high-level system design:
 @backend-architect or @frontend-architect
            │
            ▼
-@implementation-planner
+@principal-architect (review)
+           │
+     ┌─────┴─────┐
+     │           │
+  APPROVED    REVISION
+     │        REQUIRED
+     ▼           │
+@implementation-planner ←──┘ (human routes back)
            │
            ▼
 /cook <implementation-plan.md>
@@ -128,6 +356,7 @@ For simple, isolated changes:
 
 | Command | Purpose |
 |---------|---------|
+| `/spec <type> <context>` | Create design + auto-review (type: system/backend/frontend) |
 | `/cook <plan.md>` | Execute implementation plan + code review |
 | `/code-review` | Review current branch changes |
 
@@ -138,6 +367,7 @@ For simple, isolated changes:
 | Architecture | @system-architect | High-level system design |
 | Design | @backend-architect | APIs, databases, services |
 | Design | @frontend-architect | UI components, accessibility |
+| Design Review | @principal-architect | Critique designs, validate against PRD |
 | Planning | @implementation-planner | Break design into atomic tasks |
 | Execution | @cook | Orchestrate implementation (NEVER codes directly) |
 | Execution | @ic4 | TDD implementation (Explore → Test → Code) |
@@ -260,6 +490,9 @@ cd my-existing-project
   → @prototype-designer (general architecture)
   → @backend-architect (APIs, databases)
   → @frontend-architect (UI, components)
+
+"I have a design and want it reviewed before implementation"
+  → @principal-architect (critiques design, outputs feedback with verdict)
 ```
 
 ### Typical Workflow
@@ -285,6 +518,7 @@ Repeat until all issues closed.
 | **@retrofitter** | Add tracking to existing project | Adopting mid-development |
 | **@cook** | Orchestrate with session protocols | Main development workflow |
 | **@verifier** | End-to-end verification | After implementing a feature |
+| **@principal-architect** | Review and critique designs | After design, before implementation |
 
 ### Your Existing Agents
 
@@ -410,7 +644,25 @@ User: "Build a real-time dashboard"
     │  architect    │     │  architect    │
     └───────┬───────┘     └───────┬───────┘
             │                     │
-            ▼                     ▼
+            └─────────┬───────────┘
+                      ▼
+              ┌───────────────┐
+              │  @principal-  │ ── Review designs
+              │   architect   │    Output: feedback + verdict
+              └───────┬───────┘
+                      │
+         ┌────────────┼────────────┐
+         │            │            │
+      APPROVED    APPROVED      REVISION
+         │        W/COND.       REQUIRED
+         │            │            │
+         └────────────┼────────────┘
+                      ▼
+              Human decides:
+              - Proceed → @implementation-planner
+              - Revise  → back to architects
+                      │
+                      ▼
     ┌───────────────┐     ┌───────────────┐
     │    @ic4       │     │    @ic4       │
     │  (backend)    │     │  (frontend)   │
@@ -655,7 +907,12 @@ claude-marto-toolkit/
 │   │   ├── initializer.md              # New project setup
 │   │   └── retrofitter.md              # Existing project adoption
 │   └── quality/
+│       ├── principal-architect.md      # Design review and critique
 │       └── verifier.md                 # End-to-end verification
+├── commands/
+│   ├── spec.md                         # /spec - Create design + auto-review
+│   ├── cook.md                         # /cook - Execute implementation plan
+│   └── code-review.md                  # /code-review - Review branch changes
 ├── scripts/
 │   ├── github-sync.sh                  # GitHub ↔ local sync (copy to projects)
 │   └── init.sh.template                # Reference only (agents generate project-specific)
@@ -685,6 +942,9 @@ my-project/
 ├── .claude/
 │   └── archives/
 │       └── completed_features.json
+├── docs/
+│   └── design/
+│       └── feedback/             # Design review output from @principal-architect
 ├── verification/
 │   └── screenshots/
 └── src/                          # Your code
