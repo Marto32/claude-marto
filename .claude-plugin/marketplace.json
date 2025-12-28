@@ -39,13 +39,13 @@
       "category": "development",
       "strict": true,
       "skills": [
-        "dsa",
-        "mermaid",
-        "skill-creator"
+        "./skills/dsa/SKILL.md",
+        "./skills/mermaid/SKILL.md",
+        "./skills/skill-creator/SKILL.md"
       ],
       "commands": [
-        "code-explain",
-        "cook"
+        "./commands/code-explain.md",
+        "./commands/cook.md"
       ]
     }
   ]
