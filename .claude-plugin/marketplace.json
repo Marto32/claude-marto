@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Claude Code plugins and tools for comprehensive software development workflows",
-    "version": "1.2.5"
+    "version": "1.3.0"
   },
   "plugins": [
     {
       "name": "claude-marto-toolkit",
       "source": "./",
-      "description": "Comprehensive Claude Code extension with 19 specialized subagents, DSA skill, skill-creator toolkit, and code explanation commands for software development workflows",
-      "version": "1.2.5",
+      "description": "Comprehensive Claude Code extension with 21 specialized subagents, DSA skill, skill-creator toolkit, and code explanation commands for software development workflows",
+      "version": "1.3.0",
       "author": {
         "name": "Michael Martorella"
       },
@@ -45,6 +45,7 @@
       ],
       "commands": [
         "./commands/code-explain.md",
+        "./commands/code-review.md",
         "./commands/cook.md"
       ]
     }

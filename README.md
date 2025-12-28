@@ -1,14 +1,16 @@
 # Claude Marto Agent Toolkit
 
-A structured agent system for long-running software development with session continuity and GitHub Issues integration.
+A structured agent system for **human-in-the-loop design and development** with session continuity and GitHub Issues integration.
 
 ## Overview
 
-This toolkit solves a fundamental problem with AI-assisted development: **context windows are finite, but projects are not**. 
+This toolkit solves a fundamental problem with AI-assisted development: **context windows are finite, but projects are not**.
 
 When Claude runs out of context mid-project, it loses track of what's done, what's remaining, and what state the code is in. This system creates persistent artifacts that survive across sessions, enabling coherent multi-session development.
 
 **Key Principle:** GitHub Issues are the source of truth. Local files are synced working copies that agents read/write during sessions.
+
+**Design Philosophy:** Human-in-the-loop at every stage. Architects produce designs for human review. Implementation plans are approved before execution. Code reviews catch issues before merge.
 
 ## Architecture
 
@@ -39,6 +41,108 @@ When Claude runs out of context mid-project, it loses track of what's done, what
 │  Issue #1: ✓ closed    Issue #2: status:verified → closed      │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+## Design-to-Implementation Workflow
+
+This toolkit is designed for **human-in-the-loop development**. Each stage produces artifacts for human review before proceeding.
+
+### The Full Pipeline (Large Features)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STAGE 1: HIGH-LEVEL ARCHITECTURE                                            │
+│ Agent: @system-architect                                                    │
+│ Input: Requirements, feature request, or problem statement                  │
+│ Output: System design document (architecture, components, data flow)        │
+│ Human Review: ✓ Approve overall approach before detailed design             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    ▼                               ▼
+┌─────────────────────────────────┐ ┌─────────────────────────────────┐
+│ STAGE 2A: BACKEND DESIGN        │ │ STAGE 2B: FRONTEND DESIGN       │
+│ Agent: @backend-architect       │ │ Agent: @frontend-architect      │
+│ Input: System design from above │ │ Input: System design from above │
+│ Output: API specs, DB schemas   │ │ Output: Component specs, UI/UX  │
+│ Human Review: ✓ Approve APIs    │ │ Human Review: ✓ Approve UI      │
+└─────────────────────────────────┘ └─────────────────────────────────┘
+                    │                               │
+                    └───────────────┬───────────────┘
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STAGE 3: IMPLEMENTATION PLANNING                                            │
+│ Agent: @implementation-planner                                              │
+│ Input: Backend + Frontend design documents                                  │
+│ Output: Hierarchical task checklist with IDs, deps, [PARALLEL]/[SEQUENTIAL]│
+│ Human Review: ✓ Approve implementation plan before coding begins           │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STAGE 4: EXECUTION                                                          │
+│ Command: /cook <implementation-plan.md>                                     │
+│ Agents: @cook orchestrates @ic4 (TDD), @verifier, @technical-writer        │
+│ Output: Working code with tests, verification report                        │
+│ Human Review: ✓ Code review runs automatically after implementation         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STAGE 5: CODE REVIEW                                                        │
+│ Command: /code-review (runs automatically after /cook)                      │
+│ Agent: @pragmatic-code-review                                               │
+│ Output: Review saved to docs/code_review/                                   │
+│ Human Review: ✓ Address any critical issues before merge                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Smaller Features (Skip System Architecture)
+
+For features that don't need high-level system design:
+
+```
+@backend-architect or @frontend-architect
+           │
+           ▼
+@implementation-planner
+           │
+           ▼
+/cook <implementation-plan.md>
+           │
+           ▼
+Automatic code review
+```
+
+### Single Component (Use Agents Directly)
+
+For simple, isolated changes:
+
+```
+@ic4 (with task details)
+  └→ Uses @Explore to understand codebase
+  └→ Uses @unit-test-specialist for TDD
+  └→ Implements until tests pass
+```
+
+### Workflow Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/cook <plan.md>` | Execute implementation plan + code review |
+| `/code-review` | Review current branch changes |
+
+### Key Agents by Stage
+
+| Stage | Agent | Purpose |
+|-------|-------|---------|
+| Architecture | @system-architect | High-level system design |
+| Design | @backend-architect | APIs, databases, services |
+| Design | @frontend-architect | UI components, accessibility |
+| Planning | @implementation-planner | Break design into atomic tasks |
+| Execution | @cook | Orchestrate implementation (NEVER codes directly) |
+| Execution | @ic4 | TDD implementation (Explore → Test → Code) |
+| Quality | @verifier | End-to-end verification |
+| Quality | @pragmatic-code-review | Code review with Pragmatic Quality framework |
 
 ## Prerequisites
 

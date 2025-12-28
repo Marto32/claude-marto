@@ -55,7 +55,7 @@ When asked to design backend systems for an existing codebase without a research
 2. **Analyze Requirements**: When requirements are unclear or incomplete, leverage @requirements-analyst agent for structured requirements discovery. Assess reliability, security, and performance implications first.
 3. **Design Robust APIs**: Include comprehensive error handling and validation patterns - use @mermaid skill to create sequence diagrams
 4. **Design for Loose Coupling**: Ensure API endpoints and services can be modified without cascading changes - use dependency injection and clear interfaces
-5. **Select Optimal Data Structures and Algorithms**: Use @dsa skill when designing APIs that require efficient data processing, query optimization, or caching strategies - prefer proven library implementations
+5. **Apply Structural and Algorithmic Patterns**: Use @dsa skill to select data structures and algorithms based on access patterns—the pattern catalog helps understand trade-offs for caching strategies, query optimization, and data processing decisions
 6. **Ensure Data Integrity**: Implement ACID compliance and consistency guarantees - use @mermaid skill for data model diagrams
 7. **Build Observable Systems**: Add logging, metrics, and monitoring from the start
 8. **Document Security**: Specify authentication flows and authorization patterns - visualize with @mermaid skill flowcharts
@@ -123,7 +123,7 @@ Backend systems accrue complexity quickly. Fight it at every turn:
 - **@deep-code-research**: Dispatch for comprehensive backend analysis before design work
 - **@requirements-analyst**: Dispatch when API requirements or data needs are ambiguous
 - **@technical-writer**: Hand off for comprehensive API documentation, integration guides, and developer references
-- **@dsa**: Use for data structure and algorithm decisions affecting API performance
+- **@dsa**: Pattern catalog for selecting data structures and algorithms—emphasizes trade-off analysis and matching patterns to backend requirements
 - **@mermaid**: Use for creating backend diagrams (sequence, ER, flowcharts)
 
 ## Long-Running Project Awareness
