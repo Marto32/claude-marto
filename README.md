@@ -55,9 +55,12 @@ Executes an implementation plan end-to-end with TDD and auto-review.
 **What happens:**
 1. Parses the implementation plan (from @implementation-planner)
 2. Spawns @deep-code-research to understand the codebase
-3. Spawns @ic4 agents for each task (TDD: tests first, then implement)
-4. Spawns @verifier to confirm everything works
-5. Automatically runs code review on completed work
+3. Spawns @unit-test-specialist for each task (writes failing tests first)
+4. Spawns @ic4 agents for each task (implements until tests pass)
+5. Spawns @verifier to confirm everything works
+6. Automatically runs code review on completed work
+
+**Architecture note:** The `/cook` command orchestrates at the main thread level. All spawned agents are "leaf workers" that do their own work without spawning sub-agents (Claude Code limitation).
 
 ```bash
 # Example
@@ -221,6 +224,38 @@ my-task-app/
 
 ## Architecture
 
+### Flattened Agent Architecture
+
+**Key constraint:** Sub-agents cannot spawn other sub-agents in Claude Code. All orchestration happens at the slash command level.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    SLASH COMMANDS (Orchestrators)               │
+│         /cook                              /spec                │
+│    (main thread)                      (main thread)             │
+└──────────┬────────────────────────────────┬─────────────────────┘
+           │                                │
+           ▼                                ▼
+┌──────────────────────────────┐  ┌──────────────────────────────┐
+│    LEAF AGENTS (No Spawning) │  │    LEAF AGENTS (No Spawning) │
+│                              │  │                              │
+│  @deep-code-research         │  │  @deep-code-research         │
+│  @unit-test-specialist       │  │  @system-architect           │
+│  @ic4                        │  │  @backend-architect          │
+│  @verifier                   │  │  @frontend-architect         │
+│                              │  │  @principal-architect        │
+└──────────────────────────────┘  └──────────────────────────────┘
+```
+
+### Tool Selection (LSP-First)
+
+All agents prefer LSP tools when available for accurate code navigation:
+- `mcp__lsp__go_to_definition` → Falls back to Grep + Read
+- `mcp__lsp__find_references` → Falls back to Grep for symbol
+- `mcp__lsp__workspace_symbols` → Falls back to Glob + Grep
+
+### GitHub Integration
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        GitHub Issues                            │
@@ -238,7 +273,7 @@ my-task-app/
             ┌──────────────────┼──────────────────┐
             ▼                  ▼                  ▼
      ┌───────────┐      ┌───────────┐      ┌───────────┐
-     │   @cook   │      │   @ic4    │      │ @verifier │
+     │   /cook   │      │   @ic4    │      │ @verifier │
      │ orchestrate│      │ implement │      │  verify   │
      └───────────┘      └───────────┘      └───────────┘
                                │
@@ -302,7 +337,7 @@ This toolkit is designed for **human-in-the-loop development**. Each stage produ
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ STAGE 4: EXECUTION                                                          │
 │ Command: /cook <implementation-plan.md>                                     │
-│ Agents: @cook orchestrates @ic4 (TDD), @verifier, @technical-writer        │
+│ Spawns: @deep-code-research → @unit-test-specialist → @ic4 → @verifier     │
 │ Output: Working code with tests, verification report                        │
 │ Human Review: ✓ Code review runs automatically after implementation         │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -369,8 +404,8 @@ For simple, isolated changes:
 | Design | @frontend-architect | UI components, accessibility |
 | Design Review | @principal-architect | Critique designs, validate against PRD |
 | Planning | @implementation-planner | Break design into atomic tasks |
-| Execution | @cook | Orchestrate implementation (NEVER codes directly) |
-| Execution | @ic4 | TDD implementation (Explore → Test → Code) |
+| Execution | /cook | Orchestrate implementation (command, not agent) |
+| Execution | @ic4 | Implementation (receives tests, makes them pass) |
 | Quality | @verifier | End-to-end verification |
 | Quality | @pragmatic-code-review | Code review with Pragmatic Quality framework |
 
@@ -474,7 +509,7 @@ cd my-existing-project
   → @retrofitter (normalizes issues, adopts infrastructure)
 
 "I need to implement the next feature"
-  → @cook (orchestrates the full workflow)
+  → /cook (command that orchestrates the full workflow)
   → or @ic4 directly (if you know exactly what to build)
 
 "I need to verify a feature works end-to-end"
@@ -502,10 +537,11 @@ Day 1 (Setup):
   @initializer  →  Creates 50-200 GitHub Issues
 
 Day 2+ (Development loop):
-  @cook  →  Picks next feature
-    └→ @deep-code-research (if needed)
-    └→ @ic4  →  Implements feature
-    └→ @verifier  →  Verifies & closes issue
+  /cook <plan.md>  →  Executes implementation plan
+    └→ @deep-code-research (understand codebase)
+    └→ @unit-test-specialist (write tests first)
+    └→ @ic4 (implement until tests pass)
+    └→ @verifier (verify & close issue)
 
 Repeat until all issues closed.
 ```
@@ -516,9 +552,11 @@ Repeat until all issues closed.
 |-------|---------|-------------|
 | **@initializer** | Set up new project with GitHub Issues | First session of new project |
 | **@retrofitter** | Add tracking to existing project | Adopting mid-development |
-| **@cook** | Orchestrate with session protocols | Main development workflow |
 | **@verifier** | End-to-end verification | After implementing a feature |
 | **@principal-architect** | Review and critique designs | After design, before implementation |
+| **@unit-test-specialist** | Write comprehensive tests | TDD red phase (before implementation) |
+
+**Note:** `/cook` is a **command**, not an agent. It orchestrates agents at the main thread level.
 
 ### Your Existing Agents
 
@@ -551,28 +589,31 @@ User provides design document
             │
             ▼
     ┌───────────────┐
-    │    @cook      │ ── Reads feature_index.json
-    └───────┬───────┘    Picks highest priority feature
-            │
-            ▼
-    ┌───────────────┐
-    │@deep-code-    │ ── Analyzes relevant code
-    │   research    │    (if existing code)
+    │    /cook      │ ── Command orchestrates:
     └───────┬───────┘
             │
-            ▼
-    ┌───────────────┐
-    │    @ic4       │ ── Implements feature
-    └───────┬───────┘    Writes tests
-            │
-            ▼
-    ┌───────────────┐
-    │  @verifier    │ ── Runs verification steps
-    └───────┬───────┘    Captures screenshots
-            │            Updates GitHub Issue
-            ▼
-    Issue closed ✓
-    Next feature...
+    ┌───────┴───────────────────────┐
+    │                               │
+    ▼                               ▼
+┌───────────────┐           ┌───────────────┐
+│@deep-code-    │           │@unit-test-    │
+│   research    │           │  specialist   │
+└───────┬───────┘           └───────┬───────┘
+        │                           │
+        └───────────┬───────────────┘
+                    ▼
+            ┌───────────────┐
+            │    @ic4       │ ── Implements until
+            └───────┬───────┘    tests pass
+                    │
+                    ▼
+            ┌───────────────┐
+            │  @verifier    │ ── Runs verification
+            └───────┬───────┘    Captures screenshots
+                    │
+                    ▼
+            Issue closed ✓
+            Next feature...
 ```
 
 ### Workflow 2: Continue Existing Project
@@ -590,7 +631,7 @@ head -40 claude-progress.txt   # See recent history
 "Continue implementing features"
 
     ┌───────────────┐
-    │    @cook      │ ── Reads progress, picks next feature
+    │    /cook      │ ── Command orchestrates implementation
     └───────┬───────┘
             │
             ▼
@@ -903,7 +944,6 @@ claude-marto-toolkit/
 ├── README.md                           # This file
 ├── agents/
 │   ├── orchestration/
-│   │   ├── cook.md                     # Design-to-implementation orchestrator
 │   │   ├── initializer.md              # New project setup
 │   │   └── retrofitter.md              # Existing project adoption
 │   └── quality/
@@ -911,7 +951,7 @@ claude-marto-toolkit/
 │       └── verifier.md                 # End-to-end verification
 ├── commands/
 │   ├── spec.md                         # /spec - Create design + auto-review
-│   ├── cook.md                         # /cook - Execute implementation plan
+│   ├── cook.md                         # /cook - Execute implementation plan (orchestrator)
 │   └── code-review.md                  # /code-review - Review branch changes
 ├── scripts/
 │   ├── github-sync.sh                  # GitHub ↔ local sync (copy to projects)

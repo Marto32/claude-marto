@@ -43,9 +43,60 @@ Before proceeding, validate the input:
 
 **DO NOT proceed if architect type validation fails.** Return the appropriate error message and stop.
 
+## Orchestration Architecture
+
+**CRITICAL:** This command runs at the main Claude thread level and orchestrates ALL sub-agent spawning. Sub-agents cannot spawn other sub-agents.
+
+```
+/spec (main thread - orchestrator)
+  │
+  ├─► Step 1: @deep-code-research (if existing codebase)
+  │
+  ├─► Step 2: @{system|backend|frontend}-architect (design)
+  │
+  └─► Step 3: @principal-architect (review loop)
+```
+
 ## Workflow
 
-### Step 1: Invoke Design Architect
+### Step 0: Determine if Research Needed
+
+Check if this is an existing codebase that needs research:
+
+1. Look for existing source files (src/, lib/, app/, etc.)
+2. Check if a recent research document exists in docs/research/
+3. If existing codebase AND no recent research: spawn @deep-code-research first
+
+### Step 1: Pre-Design Research (Conditional)
+
+**If existing codebase needs research**, spawn `@deep-code-research` FIRST:
+
+```
+Task(
+  subagent_type="claude-marto-toolkit:deep-code-research",
+  prompt="Analyze the codebase to support {architect-type} design work.
+
+CONTEXT:
+$REMAINING_ARGUMENTS
+
+Focus on:
+1. Existing patterns relevant to {architect-type} concerns
+2. Integration points and dependencies
+3. Current architecture and conventions
+4. Test patterns in use
+
+Save research to: docs/research/codebase-research-{feature-name}-{date}.md"
+)
+```
+
+**Wait for completion.** Capture the research document path.
+
+**Skip this step if:**
+- Confirmed greenfield project
+- Recent research document already exists
+- User explicitly says no research needed
+
+### Step 2: Invoke Design Architect
 
 Based on the parsed architect type, spawn the appropriate design agent:
 
@@ -57,9 +108,12 @@ Task(
 
 $REMAINING_ARGUMENTS
 
+{IF_RESEARCH_EXISTS}
+CODEBASE RESEARCH: {research-doc-path}
+{/IF_RESEARCH_EXISTS}
+
 IMPORTANT:
 - If a CLAUDE.md file exists in the project root, read it first for project-specific architectural principles
-- Check if a codebase research document exists - if not and this is not a greenfield project, spawn @deep-code-research first
 - Output your design as a markdown document with clear sections
 - Save the design document to: docs/design/system-design-{feature-name}-{date}.md
 - Include architecture diagrams using @mermaid skill where appropriate"
@@ -74,9 +128,12 @@ Task(
 
 $REMAINING_ARGUMENTS
 
+{IF_RESEARCH_EXISTS}
+CODEBASE RESEARCH: {research-doc-path}
+{/IF_RESEARCH_EXISTS}
+
 IMPORTANT:
 - If a CLAUDE.md file exists in the project root, read it first for project-specific architectural principles
-- Check if a codebase research document exists - if not and this is not a greenfield project, spawn @deep-code-research first
 - Output your design as a markdown document with clear sections
 - Save the design document to: docs/design/backend-design-{feature-name}-{date}.md
 - Include API specifications, data models, and sequence diagrams using @mermaid skill where appropriate"
@@ -91,9 +148,12 @@ Task(
 
 $REMAINING_ARGUMENTS
 
+{IF_RESEARCH_EXISTS}
+CODEBASE RESEARCH: {research-doc-path}
+{/IF_RESEARCH_EXISTS}
+
 IMPORTANT:
 - If a CLAUDE.md file exists in the project root, read it first for project-specific architectural principles
-- Check if a codebase research document exists - if not and this is not a greenfield project, spawn @deep-code-research first
 - Output your design as a markdown document with clear sections
 - Save the design document to: docs/design/frontend-design-{feature-name}-{date}.md
 - Include component hierarchy diagrams and user flow diagrams using @mermaid skill where appropriate"
@@ -102,7 +162,7 @@ IMPORTANT:
 
 Wait for the design agent to complete and capture the path to the generated design document.
 
-### Step 2: Invoke Principal Architect Review
+### Step 3: Invoke Principal Architect Review
 
 Once the design document is created, spawn the principal architect to review it. **Pass ALL original context documents** to enable thorough requirements tracing:
 
@@ -139,23 +199,153 @@ Return:
 )
 ```
 
-### Step 3: Report Results to User
+### Step 4: Revision Loop (Until Approved)
+
+Based on the principal architect's verdict, handle accordingly:
+
+#### If APPROVED
+
+The loop ends. Update the design document to add an approval status:
+
+1. Read the design document
+2. Add an approval section at the top (after the title/header):
+
+```markdown
+## Approval Status
+
+✅ **APPROVED** - {date}
+
+[Principal Architect Review]({relative-path-to-feedback-document})
+```
+
+3. Proceed to Step 4 (Report Results)
+
+#### If APPROVED WITH CONDITIONS
+
+The design is fundamentally sound but needs targeted updates. Re-invoke the same architect type to apply the required changes:
+
+```
+Task(
+  subagent_type="claude-marto-toolkit:{architect-type}-architect",
+  prompt="Update your design document based on principal architect feedback.
+
+CURRENT DESIGN DOCUMENT:
+{path-to-design-document}
+
+PRINCIPAL ARCHITECT FEEDBACK:
+{path-to-feedback-document}
+
+ORIGINAL CONTEXT (PRD, specs, requirements):
+$REMAINING_ARGUMENTS
+
+INSTRUCTIONS:
+1. Read the current design document
+2. Read the principal architect feedback carefully
+3. Address ONLY the conditions listed in the 'Conditions for Approval' section
+4. Do NOT redesign from scratch - make targeted updates to resolve the specific conditions
+5. Update the design document in place (same file path)
+6. Note which conditions were addressed at the end of the document
+
+Return the path to the updated design document."
+)
+```
+
+After the architect completes, **re-invoke the principal architect** (repeat Step 2) to re-review the updated design.
+
+Continue this loop until the verdict is APPROVED.
+
+#### If REVISION REQUIRED
+
+The design has fundamental issues and needs significant rework. Ask the user which architect should perform the revision:
+
+```
+AskUserQuestion(
+  questions=[{
+    "question": "The principal architect requires revision of the design. Which architect should address the feedback?",
+    "header": "Architect",
+    "options": [
+      {"label": "Same architect ({type})", "description": "Use the same architect type that created the original design"},
+      {"label": "System architect", "description": "For fundamental system-level issues"},
+      {"label": "Backend architect", "description": "For API, database, or service-layer issues"},
+      {"label": "Frontend architect", "description": "For UI, component, or state management issues"}
+    ],
+    "multiSelect": false
+  }]
+)
+```
+
+Once the user selects an architect, re-invoke that architect with full context:
+
+```
+Task(
+  subagent_type="claude-marto-toolkit:{selected-architect}-architect",
+  prompt="Revise the design based on principal architect feedback.
+
+CURRENT DESIGN DOCUMENT (for reference):
+{path-to-design-document}
+
+PRINCIPAL ARCHITECT FEEDBACK:
+{path-to-feedback-document}
+
+ORIGINAL CONTEXT (PRD, specs, requirements):
+$REMAINING_ARGUMENTS
+
+CRITICAL/MAJOR ISSUES TO ADDRESS:
+{list critical and major issues from feedback}
+
+INSTRUCTIONS:
+1. Read the principal architect feedback document thoroughly
+2. Read the original PRD and requirements
+3. Address ALL critical issues - these are blocking
+4. Address ALL major issues - these create significant tech debt if ignored
+5. You may choose to address minor issues at your discretion
+6. Create a revised design document (update in place at the same path)
+7. Include a 'Revision Notes' section documenting what changed and why
+
+Return the path to the revised design document."
+)
+```
+
+After the architect completes, **re-invoke the principal architect** (repeat Step 2) to re-review the revised design.
+
+Continue this loop until the verdict is APPROVED.
+
+**Loop Safeguard:** If the revision loop exceeds 3 iterations without reaching APPROVED, pause and ask the user:
+
+```
+AskUserQuestion(
+  questions=[{
+    "question": "The design has gone through 3 revision cycles without approval. How would you like to proceed?",
+    "header": "Action",
+    "options": [
+      {"label": "Continue revising", "description": "Attempt another revision cycle"},
+      {"label": "Force approve", "description": "Accept the current design despite outstanding issues"},
+      {"label": "Abort", "description": "Stop the spec process and review manually"}
+    ],
+    "multiSelect": false
+  }]
+)
+```
+
+### Step 5: Report Results to User
 
 Provide a summary including:
 
 1. **Design Document Created**
    - Path to the design document
    - Brief summary of what was designed
+   - Approval status badge: ✅ APPROVED
 
-2. **Design Review Completed**
-   - Path to the feedback document
-   - Verdict: APPROVED / APPROVED WITH CONDITIONS / REVISION REQUIRED
-   - Summary of critical/major findings (if any)
+2. **Review History** (if revisions occurred)
+   - Number of revision cycles
+   - Summary of major changes made during revision
 
-3. **Next Steps**
-   - If APPROVED: "Ready for implementation planning. Run: `@implementation-planner {design-doc-path}`"
-   - If APPROVED WITH CONDITIONS: "Address the conditions noted in the feedback, then proceed to implementation planning."
-   - If REVISION REQUIRED: "Review the feedback and re-run `/spec {type}` with revised requirements, or manually invoke the architect to address specific issues."
+3. **Design Review Completed**
+   - Path to the feedback document (final approval)
+   - Summary of any informational notes
+
+4. **Next Steps**
+   - "Ready for implementation planning. Run: `@implementation-planner {design-doc-path}`"
 
 ## Example Usage
 
@@ -237,10 +427,20 @@ mkdir -p docs/design/feedback
 **Workflow Requirements:**
 - Design agent MUST complete before invoking principal architect
 - Principal architect MUST receive both the design document AND original requirements/PRD
+- Revision loop MUST continue until APPROVED verdict is received (or user aborts)
+- Design document MUST be updated with approval status once APPROVED
 - Both documents (design + feedback) MUST be saved before reporting to user
+
+**Revision Loop Requirements:**
+- APPROVED: Add approval status section to design doc, then report results
+- APPROVED WITH CONDITIONS: Re-invoke SAME architect type to apply targeted updates, then re-review
+- REVISION REQUIRED: Ask user which architect should revise, re-invoke that architect, then re-review
+- Loop safeguard triggers after 3 iterations without approval
 
 **DO NOT:**
 - Skip the principal architect review step
+- Skip the revision loop when verdict is not APPROVED
 - Proceed with invalid architect type
 - Invoke principal architect without a completed design document
-- Report success without providing paths to both output documents
+- Report success without APPROVED verdict (unless user force-approves)
+- Report success without approval status added to design document
