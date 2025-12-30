@@ -10,6 +10,73 @@ Execute an implementation plan end-to-end by orchestrating specialized agents in
 
 $ARGUMENTS
 
+## Resume vs New Workflow
+
+**Before creating a new workflow, check for existing workflows:**
+
+### Step 1: Check for Existing Workflows
+
+```bash
+# List any existing cook workflows
+ls .claude/workflows/cook-wf-*.local.md 2>/dev/null
+```
+
+If workflows exist, read their state files and check:
+1. Is the `implementation_plan` field the same as $ARGUMENTS?
+2. Is `phase` NOT `complete`?
+
+### Step 2: If Matching Incomplete Workflow Found
+
+**Ask the user:**
+```
+AskUserQuestion(
+  questions=[{
+    "question": "Found existing workflow {WORKFLOW_ID} for this plan (phase: {phase}, {tasks_implemented}/{tasks_total} tasks). Resume or start fresh?",
+    "header": "Workflow",
+    "options": [
+      {"label": "Resume existing", "description": "Continue from {phase} phase"},
+      {"label": "Start fresh", "description": "Create new workflow, abandon old one"}
+    ],
+    "multiSelect": false
+  }]
+)
+```
+
+**If "Resume existing":**
+- Use the existing WORKFLOW_ID
+- Read the state file to determine current phase and progress
+- Skip to the appropriate phase (don't re-run completed phases)
+- Continue from where it left off
+
+**If "Start fresh":**
+- Archive the old workflow: `mv {old-file} {old-file}.abandoned.md`
+- Proceed to create a new workflow
+
+### Step 3: Explicit Resume by Workflow ID
+
+If $ARGUMENTS starts with `resume` followed by a workflow ID:
+```
+/cook resume cook-wf-a1b2c3d4
+```
+
+1. Look for `.claude/workflows/cook-wf-a1b2c3d4.local.md`
+2. If found, resume that workflow (skip to current phase)
+3. If not found, error: "Workflow cook-wf-a1b2c3d4 not found"
+
+### Step 4: List Active Workflows
+
+If $ARGUMENTS is `list` or `status`:
+```
+/cook list
+```
+
+List all active cook workflows with their status:
+```
+Active /cook workflows:
+- cook-wf-a1b2c3d4: implementation-plan-auth.md (phase: implementation, 3/5 tasks)
+- cook-wf-e5f6g7h8: implementation-plan-api.md (phase: testing, 0/3 tasks)
+```
+
 ## Workflow State Management
 
 **CRITICAL:** This command uses hook-based workflow enforcement. The Stop hook will prevent premature exit and ensure all phases complete.

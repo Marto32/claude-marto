@@ -10,6 +10,72 @@ Create and review architectural designs using specialized architect agents, foll
 
 $ARGUMENTS
 
+## Resume vs New Workflow
+
+**Before creating a new workflow, check for existing workflows:**
+
+### Step 1: Check for Existing Workflows
+
+```bash
+# List any existing spec workflows
+ls .claude/workflows/spec-wf-*.local.md 2>/dev/null
+```
+
+If workflows exist, read their state files and check:
+1. Is the `architect_type` and `original_context` similar to current request?
+2. Is `current_verdict` NOT `approved`?
+
+### Step 2: If Matching Incomplete Workflow Found
+
+**Ask the user:**
+```
+AskUserQuestion(
+  questions=[{
+    "question": "Found existing workflow {WORKFLOW_ID} for {architect_type} design (verdict: {current_verdict}, iteration: {iteration}). Resume or start fresh?",
+    "header": "Workflow",
+    "options": [
+      {"label": "Resume existing", "description": "Continue revision loop from iteration {iteration}"},
+      {"label": "Start fresh", "description": "Create new workflow, abandon old one"}
+    ],
+    "multiSelect": false
+  }]
+)
+```
+
+**If "Resume existing":**
+- Use the existing WORKFLOW_ID
+- Read the state file to determine current state
+- Continue from where it left off (e.g., spawn principal-architect if awaiting review)
+
+**If "Start fresh":**
+- Archive the old workflow: `mv {old-file} {old-file}.abandoned.md`
+- Proceed to create a new workflow
+
+### Step 3: Explicit Resume by Workflow ID
+
+If first argument is `resume` followed by a workflow ID:
+```
+/spec resume spec-wf-a1b2c3d4
+```
+
+1. Look for `.claude/workflows/spec-wf-a1b2c3d4.local.md`
+2. If found, resume that workflow (skip to current state)
+3. If not found, error: "Workflow spec-wf-a1b2c3d4 not found"
+
+### Step 4: List Active Workflows
+
+If $ARGUMENTS is `list` or `status`:
+```
+/spec list
+```
+
+List all active spec workflows with their status:
+```
+Active /spec workflows:
+- spec-wf-a1b2c3d4: backend design (verdict: revision_required, iteration: 2)
+- spec-wf-e5f6g7h8: frontend design (verdict: approved_with_conditions, iteration: 1)
+```
+
 ## Workflow State Management
 
 **CRITICAL:** This command uses hook-based workflow enforcement. The Stop hook will prevent premature exit and ensure the design revision loop completes until APPROVED.
