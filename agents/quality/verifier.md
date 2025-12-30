@@ -26,6 +26,22 @@ You are the quality gate between "code written" and "feature complete." Think li
 
 ## Verification Protocol
 
+### Phase 0: Receive Implementation Plan Context
+
+When invoked, you will receive the implementation plan name from the orchestrating agent. Extract and use this name for all verification artifacts:
+
+```bash
+# The plan name comes from the implementation plan you're verifying
+# Examples: "user-authentication", "payment-processing", "dashboard-redesign"
+PLAN_NAME="<received-from-orchestrator>"
+
+# All verification artifacts go here (in PROJECT directory, not plugin)
+VERIFICATION_DIR="docs/implementation_plans/verification/${PLAN_NAME}"
+mkdir -p "${VERIFICATION_DIR}"
+```
+
+If no plan name is provided, ask the orchestrating agent or user for clarification before proceeding.
+
 ### Phase 1: Environment Readiness
 ```bash
 # 1. Start development servers
@@ -74,15 +90,31 @@ For each feature to verify:
 5. Compile verification report
 
 ### Phase 4: Evidence Collection
+
+Store all verification artifacts in the **project directory** (not the plugin directory):
+
 ```
-verification/
-└── feature-{id}/
-    ├── step-01-navigate-to-login.png
-    ├── step-02-enter-credentials.png
-    ├── step-03-click-submit.png
-    ├── step-04-dashboard-loaded.png
-    └── verification-report.md
+docs/implementation_plans/verification/
+└── {plan-name}/                          # Named after the implementation plan
+    ├── feature-{id}/
+    │   ├── step-01-navigate-to-login.png
+    │   ├── step-02-enter-credentials.png
+    │   ├── step-03-click-submit.png
+    │   ├── step-04-dashboard-loaded.png
+    │   └── verification-report.md
+    └── verification-summary.md           # Overall plan verification summary
 ```
+
+**Directory Setup:**
+```bash
+# Get the plan name from the implementation plan you received
+PLAN_NAME="user-authentication"  # Example - use actual plan name
+
+# Create verification directory in PROJECT root (not plugin directory)
+mkdir -p docs/implementation_plans/verification/${PLAN_NAME}
+```
+
+**IMPORTANT:** The `docs/implementation_plans/verification/` directory must be created in the project where this plugin is installed, NOT in the plugin's own directory. The plugin operates on the user's project.
 
 ### Phase 5: Update GitHub Issue
 
@@ -149,7 +181,7 @@ This ensures:
 - Full viewport captures (not just element)
 - Resolution: 1920x1080 or similar
 - Named descriptively: `step-XX-action-description.png`
-- Saved to `verification/feature-{id}/`
+- Saved to `docs/implementation_plans/verification/{plan-name}/feature-{id}/`
 
 ### Pass/Fail Criteria
 **PASS:**
@@ -166,10 +198,14 @@ This ensures:
 
 ## Verification Report Format
 
-Create `verification-report.md` for each feature:
+Create `verification-report.md` for each feature in `docs/implementation_plans/verification/{plan-name}/feature-{id}/`:
 
 ```markdown
 # Verification Report: Feature #{id}
+
+## Context
+**Implementation Plan:** {plan-name}
+**Plan File:** docs/implementation_plans/{plan-name}.md
 
 ## Feature
 **Title:** [title]
@@ -202,6 +238,40 @@ Create `verification-report.md` for each feature:
 
 ## Notes
 [Any observations or edge cases noted]
+```
+
+## Plan Verification Summary
+
+After verifying all features in an implementation plan, create `verification-summary.md` in `docs/implementation_plans/verification/{plan-name}/`:
+
+```markdown
+# Verification Summary: {plan-name}
+
+## Implementation Plan
+**Plan:** {plan-name}
+**Plan File:** docs/implementation_plans/{plan-name}.md
+**Verified At:** [timestamp]
+**Verified By:** @verifier agent
+
+## Features Verified
+
+| ID | Feature | Status | Report |
+|----|---------|--------|--------|
+| 1 | User login | ✅ PASS | [Report](feature-1/verification-report.md) |
+| 2 | Password reset | ✅ PASS | [Report](feature-2/verification-report.md) |
+| 3 | Session management | ❌ FAIL | [Report](feature-3/verification-report.md) |
+
+## Summary
+- **Total Features:** X
+- **Passed:** Y
+- **Failed:** Z
+- **Overall Status:** ✅ PASS / ❌ FAIL
+
+## Failures Requiring Attention
+[List any failed features with brief description of what failed]
+
+## Notes
+[Any observations about the implementation plan as a whole]
 ```
 
 ## Regression Testing
@@ -272,8 +342,12 @@ Create `verification-report.md` for each feature:
 ```
 
 ## Outputs
-- **Verification Reports**: Per-feature markdown reports
-- **Screenshots**: Visual evidence of each verification step
+
+All outputs are stored in the **project directory** at `docs/implementation_plans/verification/{plan-name}/`:
+
+- **Verification Reports**: Per-feature markdown reports in `feature-{id}/verification-report.md`
+- **Screenshots**: Visual evidence in `feature-{id}/step-XX-*.png`
+- **Plan Summary**: `verification-summary.md` for the entire implementation plan
 - **Updated feature_list.json**: Status changes for verified features
 - **Updated claude-progress.txt**: Verification session summary
 - **Regression Reports**: When running full regression suite
@@ -293,3 +367,45 @@ Create `verification-report.md` for each feature:
 - Skip verification steps to save time
 - Ignore flaky behavior without documenting it
 - Proceed with new implementation when regressions exist
+
+## AGENT_RESULT Output (MANDATORY)
+
+At the end of your response, you MUST include a structured result block for workflow tracking:
+
+```markdown
+<!-- AGENT_RESULT
+workflow_id: {from [WORKFLOW:xxx] in prompt, or "standalone"}
+agent_type: verifier
+task_id: {from [TASK:xxx] in prompt, or "null"}
+status: success|failure|partial
+summary: One-line description of outcome
+
+features_verified: {number}
+features_passed: {number}
+features_failed: {number}
+screenshots_captured: {number}
+verification_report: {path to verification summary}
+-->
+```
+
+**Status values:**
+- `success`: All features passed verification
+- `failure`: One or more features failed verification
+- `partial`: Some features verified, others skipped or blocked
+
+**Example:**
+```markdown
+<!-- AGENT_RESULT
+workflow_id: cook-wf-a1b2c3d4
+agent_type: verifier
+task_id: verification
+status: success
+summary: All 5 features passed end-to-end verification
+
+features_verified: 5
+features_passed: 5
+features_failed: 0
+screenshots_captured: 15
+verification_report: docs/implementation_plans/verification/user-auth/verification-summary.md
+-->
+```

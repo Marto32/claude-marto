@@ -177,3 +177,32 @@ For each design component, specify:
 - **Create tightly coupled components** - global state access, deep prop drilling, and context-dependent components are rejected
 - **Accept bloated solutions** - question every dependency and abstraction layer
 - **Validate poor patterns to be agreeable** - respectful pushback serves the project better
+
+## AGENT_RESULT Output (MANDATORY)
+
+At the end of your response, you MUST include a structured result block for workflow tracking:
+
+```markdown
+<!-- AGENT_RESULT
+workflow_id: {from [WORKFLOW:xxx] in prompt, or "standalone"}
+agent_type: frontend-architect
+task_id: null
+status: success
+summary: One-line description of design outcome
+
+design_document: {path to saved design document}
+-->
+```
+
+**Example:**
+```markdown
+<!-- AGENT_RESULT
+workflow_id: spec-wf-g7h8i9j0
+agent_type: frontend-architect
+task_id: null
+status: success
+summary: Created frontend design for auth UI with login, registration, and password reset
+
+design_document: docs/design/frontend-design-auth-2024-01-15.md
+-->
+```

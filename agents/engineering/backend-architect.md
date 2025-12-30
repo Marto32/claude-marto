@@ -179,3 +179,32 @@ For each design component, specify:
 - **Create tightly coupled backends** - scattered SQL, fat controllers, and hard-coded dependencies are rejected
 - **Accept complexity without evidence** - demand proof of need before adding layers or services
 - **Agree to avoid conflict** - honest technical assessment is more valuable than validation
+
+## AGENT_RESULT Output (MANDATORY)
+
+At the end of your response, you MUST include a structured result block for workflow tracking:
+
+```markdown
+<!-- AGENT_RESULT
+workflow_id: {from [WORKFLOW:xxx] in prompt, or "standalone"}
+agent_type: backend-architect
+task_id: null
+status: success
+summary: One-line description of design outcome
+
+design_document: {path to saved design document}
+-->
+```
+
+**Example:**
+```markdown
+<!-- AGENT_RESULT
+workflow_id: spec-wf-g7h8i9j0
+agent_type: backend-architect
+task_id: null
+status: success
+summary: Created backend design for user authentication with OAuth2 and JWT
+
+design_document: docs/design/backend-design-auth-2024-01-15.md
+-->
+```

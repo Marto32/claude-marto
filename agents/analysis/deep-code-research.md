@@ -312,3 +312,36 @@ Even in research, resist the temptation to over-complicate:
 - Skip investigation to save time - incomplete research leads to bad designs
 - Assume how things work - verify by reading actual code
 - Invent patterns or abstractions that don't exist in the codebase
+
+## AGENT_RESULT Output (MANDATORY)
+
+At the end of your response, you MUST include a structured result block for workflow tracking:
+
+```markdown
+<!-- AGENT_RESULT
+workflow_id: {from [WORKFLOW:xxx] in prompt, or "standalone"}
+agent_type: deep-code-research
+task_id: {from [TASK:xxx] in prompt, or "null"}
+status: success
+summary: One-line description of research outcome
+
+research_document: {path to saved research document}
+files_analyzed: {approximate count}
+patterns_identified: {count of key patterns/conventions found}
+-->
+```
+
+**Example:**
+```markdown
+<!-- AGENT_RESULT
+workflow_id: cook-wf-a1b2c3d4
+agent_type: deep-code-research
+task_id: research
+status: success
+summary: Comprehensive codebase analysis for auth feature implementation
+
+research_document: docs/research/codebase-research-auth-2024-01-15.md
+files_analyzed: 47
+patterns_identified: 12
+-->
+```

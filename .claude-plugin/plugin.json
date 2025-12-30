@@ -1,7 +1,7 @@
 {
   "name": "claude-marto-toolkit",
-  "description": "Comprehensive Claude Code extension with 21 specialized subagents, DSA skill, skill-creator toolkit, and code explanation commands for software development workflows",
-  "version": "1.6.0",
+  "description": "Comprehensive Claude Code extension with 21 specialized subagents, workflow enforcement hooks for /cook and /spec commands, DSA skill, skill-creator toolkit, and code explanation commands for software development workflows",
+  "version": "2.0.0",
   "skills": [
     "./skills/dsa/SKILL.md",
     "./skills/mermaid/SKILL.md",
@@ -57,6 +57,9 @@
     "development-tools",
     "unit-testing",
     "data-structures",
-    "algorithms"
+    "algorithms",
+    "hooks",
+    "workflow-automation",
+    "tdd"
   ]
 }

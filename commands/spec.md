@@ -10,6 +10,71 @@ Create and review architectural designs using specialized architect agents, foll
 
 $ARGUMENTS
 
+## Workflow State Management
+
+**CRITICAL:** This command uses hook-based workflow enforcement. The Stop hook will prevent premature exit and ensure the design revision loop completes until APPROVED.
+
+### Initialize Workflow State (MANDATORY - After Validation)
+
+After validating input (architect type and context), create the workflow state file:
+
+1. **Generate a unique workflow ID:**
+   ```bash
+   WORKFLOW_ID="spec-wf-$(openssl rand -hex 4)"
+   ```
+
+2. **Create the workflows directory:**
+   ```bash
+   mkdir -p .claude/workflows
+   ```
+
+3. **Create the state file** at `.claude/workflows/{WORKFLOW_ID}.local.md`:
+   ```markdown
+   ---
+   workflow_id: {WORKFLOW_ID}
+   workflow_type: spec
+   parent_session_id: {from context if available, or "unknown"}
+   created_at: {ISO timestamp}
+   iteration: 1
+   max_iterations: 10
+   completion_promise: "DESIGN_APPROVED"
+
+   architect_type: {system|backend|frontend}
+   original_context: {$REMAINING_ARGUMENTS summary}
+
+   design_document: null
+   feedback_document: null
+   research_document: null
+
+   reviews: []
+   current_verdict: pending
+   awaiting: architect_design
+   ---
+
+   ## Continuation Context
+   Starting /spec workflow with {architect_type} architect.
+   ```
+
+4. **Record the WORKFLOW_ID** - you'll use it in ALL subagent prompts.
+
+### State File Updates
+
+Update the state file at these points:
+- After design architect completes: set `design_document`, set `awaiting` to `principal_review`
+- After principal architect reviews: set `current_verdict`, set `feedback_document`
+- On revision: increment `iteration`, update `awaiting`
+
+### Subagent Prompt Format
+
+ALL subagent prompts MUST include the workflow context:
+```
+[WORKFLOW:{WORKFLOW_ID}]
+
+{rest of prompt}
+
+IMPORTANT: End your response with an AGENT_RESULT block (see agent documentation).
+```
+
 ## Argument Parsing
 
 Parse the first argument to determine the architect type, then extract remaining context:
@@ -74,7 +139,9 @@ Check if this is an existing codebase that needs research:
 ```
 Task(
   subagent_type="claude-marto-toolkit:deep-code-research",
-  prompt="Analyze the codebase to support {architect-type} design work.
+  prompt="[WORKFLOW:{WORKFLOW_ID}]
+
+Analyze the codebase to support {architect-type} design work.
 
 CONTEXT:
 $REMAINING_ARGUMENTS
@@ -85,11 +152,13 @@ Focus on:
 3. Current architecture and conventions
 4. Test patterns in use
 
-Save research to: docs/research/codebase-research-{feature-name}-{date}.md"
+Save research to: docs/research/codebase-research-{feature-name}-{date}.md
+
+IMPORTANT: End your response with an AGENT_RESULT block."
 )
 ```
 
-**Wait for completion.** Capture the research document path.
+**Wait for completion.** Update state file: set `research_document` to the output path.
 
 **Skip this step if:**
 - Confirmed greenfield project
@@ -104,7 +173,9 @@ Based on the parsed architect type, spawn the appropriate design agent:
 ```
 Task(
   subagent_type="claude-marto-toolkit:system-architect",
-  prompt="Design a system architecture based on the following requirements and context:
+  prompt="[WORKFLOW:{WORKFLOW_ID}]
+
+Design a system architecture based on the following requirements and context:
 
 $REMAINING_ARGUMENTS
 
@@ -116,7 +187,9 @@ IMPORTANT:
 - If a CLAUDE.md file exists in the project root, read it first for project-specific architectural principles
 - Output your design as a markdown document with clear sections
 - Save the design document to: docs/design/system-design-{feature-name}-{date}.md
-- Include architecture diagrams using @mermaid skill where appropriate"
+- Include architecture diagrams using @mermaid skill where appropriate
+
+IMPORTANT: End your response with an AGENT_RESULT block."
 )
 ```
 
@@ -124,7 +197,9 @@ IMPORTANT:
 ```
 Task(
   subagent_type="claude-marto-toolkit:backend-architect",
-  prompt="Design backend architecture based on the following requirements and context:
+  prompt="[WORKFLOW:{WORKFLOW_ID}]
+
+Design backend architecture based on the following requirements and context:
 
 $REMAINING_ARGUMENTS
 
@@ -136,7 +211,9 @@ IMPORTANT:
 - If a CLAUDE.md file exists in the project root, read it first for project-specific architectural principles
 - Output your design as a markdown document with clear sections
 - Save the design document to: docs/design/backend-design-{feature-name}-{date}.md
-- Include API specifications, data models, and sequence diagrams using @mermaid skill where appropriate"
+- Include API specifications, data models, and sequence diagrams using @mermaid skill where appropriate
+
+IMPORTANT: End your response with an AGENT_RESULT block."
 )
 ```
 
@@ -144,7 +221,9 @@ IMPORTANT:
 ```
 Task(
   subagent_type="claude-marto-toolkit:frontend-architect",
-  prompt="Design frontend architecture based on the following requirements and context:
+  prompt="[WORKFLOW:{WORKFLOW_ID}]
+
+Design frontend architecture based on the following requirements and context:
 
 $REMAINING_ARGUMENTS
 
@@ -156,11 +235,13 @@ IMPORTANT:
 - If a CLAUDE.md file exists in the project root, read it first for project-specific architectural principles
 - Output your design as a markdown document with clear sections
 - Save the design document to: docs/design/frontend-design-{feature-name}-{date}.md
-- Include component hierarchy diagrams and user flow diagrams using @mermaid skill where appropriate"
+- Include component hierarchy diagrams and user flow diagrams using @mermaid skill where appropriate
+
+IMPORTANT: End your response with an AGENT_RESULT block."
 )
 ```
 
-Wait for the design agent to complete and capture the path to the generated design document.
+**Wait for completion.** Update state file: set `design_document` to the output path, set `awaiting` to `principal_review`.
 
 ### Step 3: Invoke Principal Architect Review
 
@@ -169,7 +250,9 @@ Once the design document is created, spawn the principal architect to review it.
 ```
 Task(
   subagent_type="claude-marto-toolkit:principal-architect",
-  prompt="Review the design document that was just created.
+  prompt="[WORKFLOW:{WORKFLOW_ID}]
+
+Review the design document that was just created.
 
 DESIGN DOCUMENT TO REVIEW:
 {path-from-step-1}
@@ -191,6 +274,8 @@ REVIEW INSTRUCTIONS:
 
 IMPORTANT: The context documents above are the SAME documents the architect received. Use them to verify the design fully addresses the stated requirements.
 
+IMPORTANT: End your response with an AGENT_RESULT block including the verdict.
+
 Return:
 - Path to the design document
 - Path to the feedback document
@@ -199,13 +284,15 @@ Return:
 )
 ```
 
+**After completion:** Update state file: set `current_verdict` to the verdict, set `feedback_document` to the output path.
+
 ### Step 4: Revision Loop (Until Approved)
 
 Based on the principal architect's verdict, handle accordingly:
 
 #### If APPROVED
 
-The loop ends. Update the design document to add an approval status:
+The loop ends. Update state file: set `current_verdict` to `approved`.
 
 1. Read the design document
 2. Add an approval section at the top (after the title/header):
@@ -218,7 +305,7 @@ The loop ends. Update the design document to add an approval status:
 [Principal Architect Review]({relative-path-to-feedback-document})
 ```
 
-3. Proceed to Step 4 (Report Results)
+3. Proceed to Step 5 (Report Results)
 
 #### If APPROVED WITH CONDITIONS
 
@@ -227,7 +314,9 @@ The design is fundamentally sound but needs targeted updates. Re-invoke the same
 ```
 Task(
   subagent_type="claude-marto-toolkit:{architect-type}-architect",
-  prompt="Update your design document based on principal architect feedback.
+  prompt="[WORKFLOW:{WORKFLOW_ID}]
+
+Update your design document based on principal architect feedback.
 
 CURRENT DESIGN DOCUMENT:
 {path-to-design-document}
@@ -246,11 +335,15 @@ INSTRUCTIONS:
 5. Update the design document in place (same file path)
 6. Note which conditions were addressed at the end of the document
 
+IMPORTANT: End your response with an AGENT_RESULT block.
+
 Return the path to the updated design document."
 )
 ```
 
-After the architect completes, **re-invoke the principal architect** (repeat Step 2) to re-review the updated design.
+After the architect completes, update state file: increment `iteration`, set `awaiting` to `principal_review`.
+
+Then **re-invoke the principal architect** (repeat Step 3) to re-review the updated design.
 
 Continue this loop until the verdict is APPROVED.
 
@@ -279,7 +372,9 @@ Once the user selects an architect, re-invoke that architect with full context:
 ```
 Task(
   subagent_type="claude-marto-toolkit:{selected-architect}-architect",
-  prompt="Revise the design based on principal architect feedback.
+  prompt="[WORKFLOW:{WORKFLOW_ID}]
+
+Revise the design based on principal architect feedback.
 
 CURRENT DESIGN DOCUMENT (for reference):
 {path-to-design-document}
@@ -302,11 +397,15 @@ INSTRUCTIONS:
 6. Create a revised design document (update in place at the same path)
 7. Include a 'Revision Notes' section documenting what changed and why
 
+IMPORTANT: End your response with an AGENT_RESULT block.
+
 Return the path to the revised design document."
 )
 ```
 
-After the architect completes, **re-invoke the principal architect** (repeat Step 2) to re-review the revised design.
+After the architect completes, update state file: increment `iteration`, set `awaiting` to `principal_review`.
+
+Then **re-invoke the principal architect** (repeat Step 3) to re-review the revised design.
 
 Continue this loop until the verdict is APPROVED.
 

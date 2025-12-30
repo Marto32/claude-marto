@@ -248,3 +248,47 @@ Note: This agent does not orchestrate revision loops. When revisions are require
 - Block on stylistic preferences without principle-based justification
 - Orchestrate revision loops—output feedback and let orchestrators decide next steps
 - Override project-specific principles from CLAUDE.md with personal preferences
+
+## AGENT_RESULT Output (MANDATORY)
+
+At the end of your response, you MUST include a structured result block for workflow tracking:
+
+```markdown
+<!-- AGENT_RESULT
+workflow_id: {from [WORKFLOW:xxx] in prompt, or "standalone"}
+agent_type: principal-architect
+task_id: null
+status: success
+summary: One-line description of review outcome
+
+verdict: approved|approved_with_conditions|revision_required
+design_document: {path to reviewed design}
+feedback_document: {path to feedback file}
+conditions_count: {number of conditions if applicable}
+critical_issues: {count}
+major_issues: {count}
+-->
+```
+
+**Verdict values:**
+- `approved`: Design is ready for implementation
+- `approved_with_conditions`: Sound design with targeted updates needed
+- `revision_required`: Fundamental issues requiring significant rework
+
+**Example:**
+```markdown
+<!-- AGENT_RESULT
+workflow_id: spec-wf-g7h8i9j0
+agent_type: principal-architect
+task_id: null
+status: success
+summary: Backend design approved with 2 conditions for rate limiting and token policy
+
+verdict: approved_with_conditions
+design_document: docs/design/backend-design-auth-2024-01-15.md
+feedback_document: docs/design/feedback/backend-design-auth-feedback.md
+conditions_count: 2
+critical_issues: 0
+major_issues: 1
+-->
+```

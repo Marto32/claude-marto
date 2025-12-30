@@ -229,3 +229,32 @@ For each design component, specify:
 - **Design tightly coupled systems** - shared databases, distributed transactions, and synchronous chains are rejected by default
 - **Accept complexity without justification** - always question additions that complicate the architecture
 - **Validate poor decisions to avoid conflict** - respectful disagreement is more valuable than silent compliance
+
+## AGENT_RESULT Output (MANDATORY)
+
+At the end of your response, you MUST include a structured result block for workflow tracking:
+
+```markdown
+<!-- AGENT_RESULT
+workflow_id: {from [WORKFLOW:xxx] in prompt, or "standalone"}
+agent_type: system-architect
+task_id: null
+status: success
+summary: One-line description of design outcome
+
+design_document: {path to saved design document}
+-->
+```
+
+**Example:**
+```markdown
+<!-- AGENT_RESULT
+workflow_id: spec-wf-g7h8i9j0
+agent_type: system-architect
+task_id: null
+status: success
+summary: Created system design for real-time notification service with event-driven architecture
+
+design_document: docs/design/system-design-notifications-2024-01-15.md
+-->
+```

@@ -10,6 +10,75 @@ Execute an implementation plan end-to-end by orchestrating specialized agents in
 
 $ARGUMENTS
 
+## Workflow State Management
+
+**CRITICAL:** This command uses hook-based workflow enforcement. The Stop hook will prevent premature exit and ensure all phases complete.
+
+### Initialize Workflow State (MANDATORY - Do This First)
+
+Before any other work, create the workflow state file:
+
+1. **Generate a unique workflow ID:**
+   ```bash
+   WORKFLOW_ID="cook-wf-$(openssl rand -hex 4)"
+   ```
+
+2. **Create the workflows directory:**
+   ```bash
+   mkdir -p .claude/workflows
+   ```
+
+3. **Create the state file** at `.claude/workflows/{WORKFLOW_ID}.local.md`:
+   ```markdown
+   ---
+   workflow_id: {WORKFLOW_ID}
+   workflow_type: cook
+   parent_session_id: {from context if available, or "unknown"}
+   created_at: {ISO timestamp}
+   iteration: 1
+   max_iterations: 50
+   completion_promise: "ALL_TASKS_VERIFIED"
+
+   implementation_plan: {$ARGUMENTS - the plan path}
+   design_document: {extracted from plan}
+   research_document: null
+
+   phase: research
+   phases_completed: []
+
+   tasks_total: {count from plan}
+   tasks_with_tests: 0
+   tasks_implemented: 0
+   tasks_verified: 0
+   ---
+
+   ## Task List
+   {parsed tasks from plan with status: pending}
+
+   ## Continuation Context
+   Starting /cook workflow. First action: spawn @deep-code-research.
+   ```
+
+4. **Record the WORKFLOW_ID** - you'll use it in ALL subagent prompts.
+
+### State File Updates
+
+Update the state file at these points:
+- After each subagent completes: increment appropriate counter
+- On phase transition: update `phase` field and add to `phases_completed`
+- On task completion: update task status in the Task List section
+
+### Subagent Prompt Format
+
+ALL subagent prompts MUST include the workflow context:
+```
+[WORKFLOW:{WORKFLOW_ID}] [TASK:{task_id}]
+
+{rest of prompt}
+
+IMPORTANT: End your response with an AGENT_RESULT block (see agent documentation).
+```
+
 ## Input Validation (MANDATORY)
 
 **This command requires a SINGLE implementation plan document as input.**
@@ -70,7 +139,9 @@ Spawn `@deep-code-research` to understand the codebase before any implementation
 ```
 Task(
   subagent_type="claude-marto-toolkit:deep-code-research",
-  prompt="Analyze the codebase for implementing tasks from the following plan:
+  prompt="[WORKFLOW:{WORKFLOW_ID}] [TASK:research]
+
+Analyze the codebase for implementing tasks from the following plan:
 
 IMPLEMENTATION PLAN: $ARGUMENTS
 
@@ -86,11 +157,16 @@ Produce a comprehensive research document covering:
 4. Language, frameworks, and test runners used
 5. Any potential conflicts with existing code
 
-Save your research to: docs/research/codebase-research-{feature-name}-{date}.md"
+Save your research to: docs/research/codebase-research-{feature-name}-{date}.md
+
+IMPORTANT: End your response with an AGENT_RESULT block."
 )
 ```
 
-**Wait for completion before proceeding.** Capture the research document path.
+**Wait for completion.** Then update state file:
+- Set `research_document` to the output path
+- Update `phase` to `testing`
+- Add `research` to `phases_completed`
 
 ### Step 2: Write Tests First (TDD Red Phase)
 
@@ -102,7 +178,9 @@ For each implementation task, spawn `@unit-test-specialist` to write failing tes
 # Example: Tasks 1.1, 1.2, 1.3 are parallel with no deps
 Task(
   subagent_type="claude-marto-toolkit:unit-test-specialist",
-  prompt="Write comprehensive failing tests for Task 1.1: {description}
+  prompt="[WORKFLOW:{WORKFLOW_ID}] [TASK:1.1]
+
+Write comprehensive failing tests for Task 1.1: {description}
 
 FILES: {file paths}
 TEST REQUIREMENTS: {from plan}
@@ -115,17 +193,29 @@ Create tests that:
 - Target 95%+ coverage for this task's scope
 
 The tests should FAIL initially - implementation doesn't exist yet.
-Commit the tests with message: 'test(task-1.1): add failing tests for {description}'"
+Commit the tests with message: 'test(task-1.1): add failing tests for {description}'
+
+IMPORTANT: End your response with an AGENT_RESULT block."
 )
 Task(
   subagent_type="claude-marto-toolkit:unit-test-specialist",
-  prompt="Write comprehensive failing tests for Task 1.2: {description}..."
+  prompt="[WORKFLOW:{WORKFLOW_ID}] [TASK:1.2]
+
+Write comprehensive failing tests for Task 1.2: {description}...
+
+IMPORTANT: End your response with an AGENT_RESULT block."
 )
 Task(
   subagent_type="claude-marto-toolkit:unit-test-specialist",
-  prompt="Write comprehensive failing tests for Task 1.3: {description}..."
+  prompt="[WORKFLOW:{WORKFLOW_ID}] [TASK:1.3]
+
+Write comprehensive failing tests for Task 1.3: {description}...
+
+IMPORTANT: End your response with an AGENT_RESULT block."
 )
 ```
+
+**After each test agent completes:** Update state file `tasks_with_tests` counter.
 
 **Sequential Execution:** For tasks marked `[SEQUENTIAL]`, spawn one at a time:
 
@@ -147,7 +237,9 @@ After tests exist for a task, spawn `@ic4` to implement until tests pass.
 ```
 Task(
   subagent_type="claude-marto-toolkit:ic4",
-  prompt="Implement Task 1.1: {description}
+  prompt="[WORKFLOW:{WORKFLOW_ID}] [TASK:1.1]
+
+Implement Task 1.1: {description}
 
 FILES: {file paths}
 TESTS: Tests already written at {test file paths}
@@ -161,13 +253,21 @@ Your job:
 5. Commit with message: 'feat(task-1.1): implement {description}
 
 Task: 1.1
-Tests: All passing'"
+Tests: All passing'
+
+IMPORTANT: End your response with an AGENT_RESULT block."
 )
 Task(
   subagent_type="claude-marto-toolkit:ic4",
-  prompt="Implement Task 1.2: {description}..."
+  prompt="[WORKFLOW:{WORKFLOW_ID}] [TASK:1.2]
+
+Implement Task 1.2: {description}...
+
+IMPORTANT: End your response with an AGENT_RESULT block."
 )
 ```
+
+**After each @ic4 completes:** Update state file `tasks_implemented` counter.
 
 **Respect Dependencies:** Only spawn @ic4 for a task after:
 1. Its tests are written (Step 2 complete for this task)
@@ -177,12 +277,16 @@ Task(
 
 ### Step 4: Post-Implementation Verification
 
-After ALL implementation tasks complete, spawn `@verifier`:
+After ALL implementation tasks complete:
+1. Update state file: set `phase` to `verification`
+2. Spawn `@verifier`:
 
 ```
 Task(
   subagent_type="claude-marto-toolkit:verifier",
-  prompt="Verify the implementation from this plan is complete and working:
+  prompt="[WORKFLOW:{WORKFLOW_ID}] [TASK:verification]
+
+Verify the implementation from this plan is complete and working:
 
 IMPLEMENTATION PLAN: $ARGUMENTS
 SOURCE DESIGN: {design-doc-path}
@@ -196,16 +300,19 @@ For each task:
 Report:
 - Pass/fail status per task
 - Any issues found
-- Screenshots if browser testing was performed"
+- Screenshots if browser testing was performed
+
+IMPORTANT: End your response with an AGENT_RESULT block."
 )
 ```
 
 ### Step 5: Handle Verification Results
 
 **If verification passes:**
-1. Update the implementation plan marking all tasks `[x]` complete
-2. List GitHub Issues ready to close (with commands)
-3. Proceed to Step 6
+1. Update state file: set `phase` to `complete`, set `tasks_verified` to total
+2. Update the implementation plan marking all tasks `[x]` complete
+3. List GitHub Issues ready to close (with commands)
+4. Proceed to Step 6
 
 **If verification fails:**
 1. Identify which tasks failed
@@ -213,13 +320,17 @@ Report:
    ```
    Task(
      subagent_type="claude-marto-toolkit:ic4",
-     prompt="Fix verification failure for Task X.Y:
+     prompt="[WORKFLOW:{WORKFLOW_ID}] [TASK:{failed_task_id}]
+
+   Fix verification failure for Task X.Y:
 
    FAILURE: {description of what failed}
    FILES: {affected files}
 
    Debug and fix the issue. Add additional test coverage if needed.
-   Commit the fix."
+   Commit the fix.
+
+   IMPORTANT: End your response with an AGENT_RESULT block."
    )
    ```
 3. Re-run verification (repeat Step 4)

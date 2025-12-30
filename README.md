@@ -222,6 +222,109 @@ my-task-app/
 @ic4 "Add a createdAt timestamp to the Task model. Write tests first."
 ```
 
+## Workflow Enforcement Hooks
+
+This toolkit uses Claude Code's hooks system to enforce deterministic workflow completion. Hooks automatically prevent premature exits and maintain state across context compaction.
+
+### How It Works
+
+When you run `/cook` or `/spec`, the command creates a **workflow state file** that tracks progress. Hooks monitor this state and:
+
+1. **Block premature stops** - If the workflow isn't complete, the Stop hook feeds back a continuation prompt
+2. **Track subagent results** - SubagentStop parses AGENT_RESULT markers and updates parent workflow state
+3. **Inject context on resume** - SessionStart provides active workflow context when sessions start/resume
+4. **Preserve state before compaction** - PreCompact ensures workflow state survives context compression
+5. **Monitor context usage** - PostToolUse warns when context is getting large
+
+### State-First Architecture
+
+All workflow state lives in files, not context. This enables:
+
+- **Context-surviving state** - Workflows continue after compaction
+- **Parallel invocations** - Multiple workflows can run simultaneously (session-namespaced)
+- **Debuggable state** - State files are human-readable markdown with YAML frontmatter
+
+```
+{PROJECT}/.claude/workflows/
+├── registry.json                    # Maps session_id → workflow_id
+├── cook-wf-a1b2c3d4.local.md       # /cook workflow state
+├── spec-wf-e5f6g7h8.local.md       # /spec workflow state
+└── hooks.log                        # Debug log
+```
+
+### Hook Events
+
+| Hook | Trigger | Purpose |
+|------|---------|---------|
+| `Stop` | Main agent stops | Block if workflow incomplete, feed continuation prompt |
+| `SubagentStop` | Subagent completes | Parse AGENT_RESULT, apply quality gates, update parent state |
+| `SessionStart` | Session starts/resumes | Inject active workflow context |
+| `PreCompact` | Before compaction | Emergency state extraction, preserve workflow progress |
+| `PostToolUse` | After Task tool | Monitor context size, warn on pressure |
+
+### AGENT_RESULT Markers
+
+All agents participating in workflows output structured result blocks:
+
+```markdown
+<!-- AGENT_RESULT
+workflow_id: cook-wf-a1b2c3d4
+agent_type: ic4
+task_id: 1.2
+status: success
+summary: Implemented email validation with all 8 tests passing
+
+tests_total: 8
+tests_passed: 8
+files_modified: src/validators/email.py
+commit_hash: abc123f
+-->
+```
+
+The SubagentStop hook parses these markers to:
+- Update workflow state with completion status
+- Apply quality gates (e.g., block if tests failing)
+- Track which tasks are complete
+
+### Workflow State File Format
+
+```markdown
+---
+workflow_id: cook-wf-a1b2c3d4
+workflow_type: cook
+parent_session_id: sess-xyz
+created_at: 2025-01-15T10:30:00
+iteration: 1
+max_iterations: 50
+phase: implementation
+tasks_total: 5
+tasks_implemented: 3
+tasks_verified: 0
+---
+
+## Task List
+- [x] 1.1 Create database schema
+- [x] 1.2 Implement user model
+- [x] 1.3 Add validation
+- [ ] 2.1 Create API endpoints
+- [ ] 2.2 Add authentication
+
+## Event Log
+[2025-01-15T10:35:00] Task 1.1: implemented
+[2025-01-15T10:40:00] Task 1.2: implemented
+```
+
+### Automatic Recovery
+
+If context runs out mid-workflow:
+
+1. **PreCompact** saves minimal pointers to state files
+2. **SessionStart** (on resume) injects workflow context
+3. **Stop hook** blocks exit and feeds continuation prompt
+4. Agent reads state file and continues from where it left off
+
+No manual intervention required - workflows are self-recovering.
+
 ## Architecture
 
 ### Flattened Agent Architecture
@@ -946,13 +1049,34 @@ claude-marto-toolkit/
 │   ├── orchestration/
 │   │   ├── initializer.md              # New project setup
 │   │   └── retrofitter.md              # Existing project adoption
+│   ├── engineering/
+│   │   ├── ic4.md                      # Implementation agent (TDD green phase)
+│   │   ├── unit-test-specialist/       # Test-writing agent (TDD red phase)
+│   │   ├── system-architect.md         # High-level system design
+│   │   ├── backend-architect.md        # API, database, security design
+│   │   └── frontend-architect.md       # UI, accessibility, performance design
+│   ├── analysis/
+│   │   └── deep-code-research.md       # Codebase research agent
 │   └── quality/
 │       ├── principal-architect.md      # Design review and critique
-│       └── verifier.md                 # End-to-end verification
+│       ├── verifier.md                 # End-to-end verification
+│       └── pragmatic-code-review.md    # Code review agent
 ├── commands/
 │   ├── spec.md                         # /spec - Create design + auto-review
 │   ├── cook.md                         # /cook - Execute implementation plan (orchestrator)
 │   └── code-review.md                  # /code-review - Review branch changes
+├── hooks/                              # Workflow enforcement hooks
+│   ├── hooks.json                      # Hook configuration (auto-merges when plugin enabled)
+│   └── scripts/
+│       ├── lib/
+│       │   ├── common.sh               # Shared utilities
+│       │   ├── cook-logic.sh           # /cook completion logic
+│       │   └── spec-logic.sh           # /spec completion logic
+│       ├── stop.sh                     # Block premature workflow exit
+│       ├── subagent-stop.sh            # Quality gates for subagents
+│       ├── session-start.sh            # Context injection on resume
+│       ├── pre-compact.sh              # State preservation before compaction
+│       └── post-tool-use.sh            # Context size monitoring
 ├── scripts/
 │   ├── github-sync.sh                  # GitHub ↔ local sync (copy to projects)
 │   └── init.sh.template                # Reference only (agents generate project-specific)
@@ -980,8 +1104,13 @@ my-project/
 │   └── ISSUE_TEMPLATE/
 │       └── feature.md            # Feature issue template
 ├── .claude/
-│   └── archives/
-│       └── completed_features.json
+│   ├── archives/
+│   │   └── completed_features.json
+│   └── workflows/                # Created at runtime by hooks
+│       ├── registry.json         # Session → workflow mapping
+│       ├── cook-wf-*.local.md    # /cook workflow state files
+│       ├── spec-wf-*.local.md    # /spec workflow state files
+│       └── hooks.log             # Hook execution log (debug)
 ├── docs/
 │   └── design/
 │       └── feedback/             # Design review output from @principal-architect
@@ -989,6 +1118,8 @@ my-project/
 │   └── screenshots/
 └── src/                          # Your code
 ```
+
+**Note:** The `.claude/workflows/` directory is created automatically when you run `/cook` or `/spec`. These files are gitignored and session-specific.
 
 ## Related Documentation
 

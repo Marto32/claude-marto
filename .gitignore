@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ============================================================================
+# Claude Code Workflow State (created at runtime in user projects)
+# ============================================================================
+# These patterns apply when users install this plugin in their projects.
+# The workflow state files are session-specific and should not be committed.
+
+# Workflow state files (session-specific)
+.claude/workflows/*.local.md
+.claude/workflows/registry.json
+.claude/workflows/hooks.log
+.claude/workflows/emergency-*.log
+
+# Completed workflow archives (optional to keep for debugging)
+.claude/workflows/*.completed.md
+
+# Local settings (user-specific)
+.claude/settings.local.json

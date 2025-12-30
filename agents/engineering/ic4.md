@@ -274,3 +274,44 @@ If implementation needs unavailable dependencies:
 If tests can't run (missing test framework, config issues):
 1. Report the infrastructure problem
 2. Wait for user to fix before proceeding
+
+## AGENT_RESULT Output (MANDATORY)
+
+At the end of your response, you MUST include a structured result block for workflow tracking:
+
+```markdown
+<!-- AGENT_RESULT
+workflow_id: {from [WORKFLOW:xxx] in prompt, or "standalone"}
+agent_type: ic4
+task_id: {from [TASK:xxx] in prompt, or "null"}
+status: success|failure
+summary: One-line description of outcome
+
+tests_total: {number}
+tests_passed: {number}
+tests_failed: {number}
+files_modified: {comma-separated list}
+commit_hash: {git commit hash or "none"}
+-->
+```
+
+**Status values:**
+- `success`: All tests pass, implementation complete
+- `failure`: Tests still failing, implementation incomplete
+
+**Example:**
+```markdown
+<!-- AGENT_RESULT
+workflow_id: cook-wf-a1b2c3d4
+agent_type: ic4
+task_id: 1.2
+status: success
+summary: Implemented email validation utility with all 8 tests passing
+
+tests_total: 8
+tests_passed: 8
+tests_failed: 0
+files_modified: src/validators/email.py
+commit_hash: abc123f
+-->
+```
