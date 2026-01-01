@@ -12,6 +12,103 @@ When Claude runs out of context mid-project, it loses track of what's done, what
 
 **Design Philosophy:** Human-in-the-loop at every stage. Architects produce designs for human review. Implementation plans are approved before execution. Code reviews catch issues before merge.
 
+---
+
+## User Guide
+
+### Installation
+
+Install the plugin from the Claude Code Marketplace:
+
+```bash
+# In any Claude Code session
+/install-plugin claude-marto-marketplace:claude-marto-toolkit
+```
+
+Or add it to your project's `.claude/settings.json`:
+
+```json
+{
+  "plugins": ["claude-marto-marketplace:claude-marto-toolkit"]
+}
+```
+
+After installation, restart Claude Code. The plugin provides:
+
+| Category | What You Get |
+|----------|--------------|
+| **Slash Commands** | `/cook`, `/spec`, `/code-review`, `/code-explain` |
+| **Skills** | `/dsa`, `/mermaid`, `/skill-creator` |
+| **21 Agents** | `@ic4`, `@backend-architect`, `@verifier`, etc. |
+| **Workflow Hooks** | Auto-enforce `/cook` and `/spec` completion |
+
+### Verify Installation
+
+```bash
+# Check that agents are available
+@ic4 --help
+
+# Check that commands work
+/cook --help
+```
+
+### The Development Loop
+
+The toolkit is designed around a **design → plan → implement** loop with human checkpoints:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1. DESIGN   →   /spec <type> <context>                         │
+│                  Creates architecture + auto-review              │
+│                  Human reviews design before proceeding          │
+├─────────────────────────────────────────────────────────────────┤
+│  2. PLAN     →   @implementation-planner <design-doc>           │
+│                  Breaks design into atomic tasks                 │
+│                  Human approves plan before coding               │
+├─────────────────────────────────────────────────────────────────┤
+│  3. IMPLEMENT →  /cook <implementation-plan.md>                 │
+│                  TDD: writes tests first, then implements        │
+│                  Auto-runs code review on completion             │
+├─────────────────────────────────────────────────────────────────┤
+│  4. SHIP     →   git add . && git commit                        │
+│                  Push, create PR, merge                          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Quick Examples
+
+**Build a complete feature from requirements:**
+```bash
+# 1. Design the system
+/spec system docs/prd/my-feature.md
+
+# 2. Design the backend (after reviewing system design)
+/spec backend docs/design/system-design-*.md
+
+# 3. Create implementation plan (after reviewing backend design)
+@implementation-planner docs/design/backend-design-*.md
+
+# 4. Implement everything (after approving plan)
+/cook docs/implementation_plans/implementation-plan-*.md
+
+# 5. Commit and ship
+git add . && git commit -m "Implement my-feature"
+```
+
+**Smaller feature (skip system design):**
+```bash
+/spec backend "Add a /health endpoint that returns {status: 'ok'}"
+@implementation-planner docs/design/backend-design-*.md
+/cook docs/implementation_plans/implementation-plan-*.md
+```
+
+**Quick implementation (when you know exactly what to build):**
+```bash
+@ic4 "Add a createdAt timestamp to the Task model. Write tests first."
+```
+
+---
+
 ## Two Commands to Rule Them All
 
 Most workflows use just two commands:
@@ -512,7 +609,9 @@ For simple, isolated changes:
 | Quality | @verifier | End-to-end verification |
 | Quality | @pragmatic-code-review | Code review with Pragmatic Quality framework |
 
-## Prerequisites
+## GitHub Integration Setup (Optional)
+
+If you want to use the session continuity features with GitHub Issues tracking:
 
 ```bash
 # Install GitHub CLI
@@ -526,37 +625,12 @@ gh auth login
 gh auth status
 ```
 
-## Installation
+This enables:
+- `@initializer` — Create GitHub Issues from design docs
+- `@retrofitter` — Add tracking to existing projects
+- `./github-sync.sh` — Sync between GitHub and local files
 
-### Adding to Your Existing Agent Toolkit
-
-If you have an existing Claude agent repo:
-
-```bash
-# 1. Copy new agents to your agents directory
-cp -r agents/orchestration/* /path/to/your-toolkit/agents/orchestration/
-cp -r agents/quality/* /path/to/your-toolkit/agents/quality/
-
-# 2. Copy scripts and templates
-cp -r scripts/* /path/to/your-toolkit/scripts/
-cp -r templates/* /path/to/your-toolkit/templates/
-
-# 3. Copy documentation
-cp -r docs/* /path/to/your-toolkit/docs/
-
-# 4. Apply patches to existing agents (see docs/patches-for-existing-agents.md)
-```
-
-### Starting Fresh
-
-If starting a new toolkit:
-
-```bash
-# Just use this directory structure as-is
-git clone https://github.com/you/claude-marto-toolkit
-```
-
-## Quick Start
+## Project Setup
 
 ### New Project
 
@@ -1045,6 +1119,8 @@ head -40 claude-progress.txt  # Recent history
 ```
 claude-marto-toolkit/
 ├── README.md                           # This file
+├── .claude-plugin/
+│   └── marketplace.json                # Plugin configuration for Claude Marketplace
 ├── agents/
 │   ├── orchestration/
 │   │   ├── initializer.md              # New project setup
@@ -1064,7 +1140,12 @@ claude-marto-toolkit/
 ├── commands/
 │   ├── spec.md                         # /spec - Create design + auto-review
 │   ├── cook.md                         # /cook - Execute implementation plan (orchestrator)
-│   └── code-review.md                  # /code-review - Review branch changes
+│   ├── code-review.md                  # /code-review - Review branch changes
+│   └── code-explain.md                 # /code-explain - Explain code in detail
+├── skills/
+│   ├── dsa/                            # /dsa - Data structures & algorithms helper
+│   ├── mermaid/                        # /mermaid - Diagram generation
+│   └── skill-creator/                  # /skill-creator - Create new skills
 ├── hooks/                              # Workflow enforcement hooks
 │   ├── hooks.json                      # Hook configuration (auto-merges when plugin enabled)
 │   └── scripts/
@@ -1120,6 +1201,19 @@ my-project/
 ```
 
 **Note:** The `.claude/workflows/` directory is created automatically when you run `/cook` or `/spec`. These files are gitignored and session-specific.
+
+**Tip:** To auto-approve workflow file edits (so agents don't prompt for permission), add this to `.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Edit(.claude/workflows/**)",
+      "Write(.claude/workflows/**)"
+    ]
+  }
+}
+```
 
 ## Related Documentation
 
