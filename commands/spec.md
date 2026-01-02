@@ -1,5 +1,6 @@
 ---
 model: claude-opus-4-5
+description: Create and review architectural designs using specialized architect agents, followed by principal architect review.
 ---
 
 # Spec Command

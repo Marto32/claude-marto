@@ -1,5 +1,6 @@
 ---
 model: claude-opus-4-5
+description: Bootstrap a project specification through AI-coached interview-style requirements gathering.
 ---
 
 # Spec Init Command

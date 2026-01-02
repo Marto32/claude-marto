@@ -1,5 +1,6 @@
 ---
 model: claude-opus-4-5
+description: Execute an implementation plan end-to-end by orchestrating specialized agents in sequence.
 ---
 
 # Cook Command

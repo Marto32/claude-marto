@@ -1,5 +1,6 @@
 ---
 model: claude-sonnet-4-5
+description: Explain complex code through clear narratives, visual diagrams, and step-by-step breakdowns.
 ---
 
 # Code Explanation and Analysis
