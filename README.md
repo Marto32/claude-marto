@@ -8,8 +8,6 @@ This toolkit solves a fundamental problem with AI-assisted development: **contex
 
 When Claude runs out of context mid-project, it loses track of what's done, what's remaining, and what state the code is in. This system creates persistent artifacts that survive across sessions, enabling coherent multi-session development.
 
-**Key Principle:** GitHub Issues are the source of truth. Local files are synced working copies that agents read/write during sessions.
-
 **Design Philosophy:** Human-in-the-loop at every stage. Architects produce designs for human review. Implementation plans are approved before execution. Code reviews catch issues before merge.
 
 ---
@@ -37,7 +35,7 @@ After installation, restart Claude Code. The plugin provides:
 
 | Category | What You Get |
 |----------|--------------|
-| **Slash Commands** | `/cook`, `/spec`, `/code-review`, `/code-explain` |
+| **Slash Commands** | `/spec-init`, `/spec`, `/cook`, `/code-review`, `/code-explain` |
 | **Skills** | `/dsa`, `/mermaid`, `/skill-creator` |
 | **21 Agents** | `@ic4`, `@backend-architect`, `@verifier`, etc. |
 | **Workflow Hooks** | Auto-enforce `/cook` and `/spec` completion |
@@ -54,10 +52,14 @@ After installation, restart Claude Code. The plugin provides:
 
 ### The Development Loop
 
-The toolkit is designed around a **design → plan → implement** loop with human checkpoints:
+The toolkit is designed around an **ideate → design → plan → implement** loop with human checkpoints:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
+│  0. IDEATE   →   /spec-init <project-idea>          (optional)  │
+│                  AI-coached interview to build requirements      │
+│                  Human refines spec before design                │
+├─────────────────────────────────────────────────────────────────┤
 │  1. DESIGN   →   /spec <type> <context>                         │
 │                  Creates architecture + auto-review              │
 │                  Human reviews design before proceeding          │
@@ -76,6 +78,14 @@ The toolkit is designed around a **design → plan → implement** loop with hum
 ```
 
 ### Quick Examples
+
+**Start from a vague idea:**
+```bash
+# 0. Build requirements through AI interview
+/spec-init A CLI tool for managing dotfiles
+
+# This produces docs/specs/spec-*.md which feeds into /spec
+```
 
 **Build a complete feature from requirements:**
 ```bash
@@ -109,9 +119,40 @@ git add . && git commit -m "Implement my-feature"
 
 ---
 
-## Two Commands to Rule Them All
+## Three Commands to Rule Them All
 
-Most workflows use just two commands:
+Most workflows use these three commands:
+
+### `/spec-init` — Bootstrap Requirements from an Idea
+
+```bash
+/spec-init <project-idea>
+```
+
+Transforms a vague project idea into a comprehensive specification through AI-coached interviewing.
+
+**What happens:**
+1. Creates a spec document at `docs/specs/spec-{id}-{name}.md`
+2. Interviews you systematically across 7 discovery areas:
+   - Problem & Goals
+   - Functional Requirements
+   - Technical Context
+   - Quality Attributes
+   - User Experience
+   - Constraints & Tradeoffs
+   - Operational Concerns
+3. Probes deeper on vague answers, challenges assumptions
+4. Documents all responses into a structured specification
+5. Produces actionable output for downstream `/spec` commands
+
+```bash
+# Examples
+/spec-init A CLI tool for managing dotfiles
+/spec-init A mobile app for tracking workouts
+/spec-init An API for processing customer orders
+```
+
+**When to use:** You have an idea but haven't fully thought through requirements, constraints, or tradeoffs. The AI interview helps surface hidden requirements and edge cases.
 
 ### `/spec` — Design with Auto-Review
 
@@ -168,7 +209,10 @@ Executes an implementation plan end-to-end with TDD and auto-review.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  /spec system docs/prd/feature.md                                       │
+│  /spec-init "My project idea"                         (optional)        │
+│     └→ AI interview builds comprehensive requirements spec              │
+│                                                                         │
+│  /spec system docs/specs/spec-*.md (or docs/prd/feature.md)             │
 │     └→ Creates system design + auto-review                              │
 │                                                                         │
 │  /spec backend docs/design/system-design.md                             │
@@ -459,14 +503,12 @@ All agents prefer LSP tools when available for accurate code navigation:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        GitHub Issues                            │
-│                      (Source of Truth)                          │
 │  Issue #1: User login ✓    Issue #2: Password reset (open)     │
 └──────────────────────────────┬──────────────────────────────────┘
                                │
                                ▼ ./github-sync.sh pull (session start)
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Local Files                              │
-│                      (Working Copy)                             │
 │  feature_list.json │ feature_index.json │ claude-progress.txt  │
 └──────────────────────────────┬──────────────────────────────────┘
                                │
@@ -591,6 +633,7 @@ For simple, isolated changes:
 
 | Command | Purpose |
 |---------|---------|
+| `/spec-init <idea>` | Bootstrap requirements through AI interview |
 | `/spec <type> <context>` | Create design + auto-review (type: system/backend/frontend) |
 | `/cook <plan.md>` | Execute implementation plan + code review |
 | `/code-review` | Review current branch changes |
@@ -679,6 +722,9 @@ cd my-existing-project
 ### Which Agent When?
 
 ```
+"I have a vague idea and need to flesh out requirements"
+  → /spec-init (AI-coached interview to build comprehensive spec)
+
 "I'm starting a brand new project"
   → @initializer (creates GitHub Issues, sets up tracking)
 
@@ -697,6 +743,7 @@ cd my-existing-project
 
 "Requirements are unclear"
   → @requirements-analyst (before designing)
+  → or /spec-init (for new projects with vague ideas)
 
 "I need to design a system/feature"
   → @prototype-designer (general architecture)
@@ -1138,6 +1185,7 @@ claude-marto-toolkit/
 │       ├── verifier.md                 # End-to-end verification
 │       └── pragmatic-code-review.md    # Code review agent
 ├── commands/
+│   ├── spec-init.md                    # /spec-init - Bootstrap requirements via AI interview
 │   ├── spec.md                         # /spec - Create design + auto-review
 │   ├── cook.md                         # /cook - Execute implementation plan (orchestrator)
 │   ├── code-review.md                  # /code-review - Review branch changes
