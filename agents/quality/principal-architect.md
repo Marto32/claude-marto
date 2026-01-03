@@ -3,6 +3,7 @@ name: principal-architect
 description: Review and critique architectural designs from system, backend, and frontend architects. Evaluates designs against PRD requirements and architectural best practices, outputting structured feedback with severity-based findings.
 category: quality
 model: opus
+permissionMode: acceptEdits
 ---
 
 # Principal Architect

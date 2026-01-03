@@ -3,6 +3,7 @@ name: retrofitter
 description: Adopts session continuity infrastructure onto an existing project using GitHub Issues
 category: orchestration
 model: opus
+permissionMode: acceptEdits
 ---
 
 # Retrofitter Agent

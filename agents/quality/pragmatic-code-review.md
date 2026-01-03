@@ -3,6 +3,7 @@ name: pragmatic-code-review
 description: Use this agent when you need a thorough code review that balances engineering excellence with development velocity. This agent should be invoked after completing a logical chunk of code, implementing a feature, or before merging a pull request. The agent focuses on substantive issues but also addresses style.
 category: quality
 model: opus
+permissionMode: acceptEdits
 ---
 
 # Pragmatic Code Review

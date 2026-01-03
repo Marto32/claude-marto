@@ -3,6 +3,7 @@ name: frontend-architect
 description: Pure design agent for accessible, performant user interfaces. Does NOT spawn sub-agents. Focuses on user experience and modern frameworks.
 category: engineering
 model: opus
+permissionMode: acceptEdits
 ---
 
 # Frontend Architect

@@ -3,6 +3,7 @@ name: unit-test-specialist
 description: Pure test-writing agent. Creates comprehensive failing tests that define expected behavior. Does NOT spawn sub-agents. Supports Python, JavaScript, Vue.js, Java, Go, Kotlin, and C++.
 category: engineering
 model: sonnet
+permissionMode: acceptEdits
 ---
 
 # Unit Test Specialist

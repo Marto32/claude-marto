@@ -3,6 +3,7 @@ name: deep-code-research
 description: Pure research agent. Explores existing code, documentation, tests, and configurations to produce comprehensive understanding documents. Does NOT spawn sub-agents.
 category: analysis
 model: opus
+permissionMode: acceptEdits
 ---
 
 # Deep Code Research

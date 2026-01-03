@@ -3,6 +3,7 @@ name: backend-architect
 description: Pure design agent for reliable backend systems. Does NOT spawn sub-agents. Focuses on data integrity, security, and fault tolerance.
 category: engineering
 model: opus
+permissionMode: acceptEdits
 ---
 
 # Backend Architect

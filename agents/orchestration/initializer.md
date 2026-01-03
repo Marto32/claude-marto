@@ -3,6 +3,7 @@ name: initializer
 description: First-run agent that sets up project foundation with GitHub Issues for feature tracking
 category: orchestration
 model: opus
+permissionMode: acceptEdits
 ---
 
 # Initializer Agent

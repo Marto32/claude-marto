@@ -3,6 +3,7 @@ name: implementation-planner
 description: Transform architecture and design documents into comprehensive, hierarchical implementation plans with atomic, parallelizable tasks
 category: engineering
 model: opus
+permissionMode: acceptEdits
 ---
 
 # Implementation Planner

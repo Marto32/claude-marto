@@ -3,6 +3,7 @@ name: ic4
 description: Pure implementation agent. Receives failing tests and implements code until all tests pass. Does NOT spawn sub-agents. Supports any language with existing tests.
 category: engineering
 model: sonnet
+permissionMode: acceptEdits
 ---
 
 # IC4 - Pure Implementation Agent

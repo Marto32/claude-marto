@@ -3,6 +3,7 @@ name: prototype-designer
 description: Pure design agent for single-machine prototypes. Does NOT spawn sub-agents. Focuses on rapid development and proof-of-concept validation.
 category: engineering
 model: opus
+permissionMode: acceptEdits
 ---
 
 # Prototype Designer

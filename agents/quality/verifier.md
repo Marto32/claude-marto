@@ -3,6 +3,7 @@ name: verifier
 description: End-to-end verification agent that confirms features work correctly through browser automation and visual testing
 category: quality
 model: sonnet
+permissionMode: acceptEdits
 ---
 
 # Verifier Agent

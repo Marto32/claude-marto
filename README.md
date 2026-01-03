@@ -1126,6 +1126,99 @@ git commit -m "WIP: Feature #X - [what's done]"
 # Next session will pick up from WIP
 ```
 
+## Fully Automated Execution (Optional)
+
+By default, Claude Code prompts for permission when agents make edits or run bash commands. For long-running workflows like `/cook`, this can be disruptive. Here's how to enable fully uninterrupted execution.
+
+### The Problem
+
+When `/cook` spawns subagents (like `@ic4`, `@unit-test-specialist`, etc.), each subagent runs as a **separate process** that doesn't inherit:
+- Your session's "accept edits" mode
+- Your project's `permissions.allow` rules for bash commands
+
+This means you'll get prompted for every edit and bash command, even if you've pre-approved them.
+
+### The Solution
+
+Add a `PermissionRequest` hook to your **target project's** `.claude/settings.local.json`:
+
+```json
+{
+  "hooks": {
+    "PermissionRequest": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "command",
+        "command": "exit 0"
+      }]
+    }]
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Edit(.claude/workflows/**)",
+      "Write(.claude/workflows/**)"
+    ]
+  }
+}
+```
+
+### What This Does
+
+| Setting | Effect |
+|---------|--------|
+| `PermissionRequest` hook with `exit 0` | Auto-approves **ALL** permission requests (every edit, every bash command including `cat`, `ls`, `npm`, `git`, etc.) for both main session and subagents |
+| `defaultMode: "acceptEdits"` | Sets the main session to auto-accept file edits |
+| `permissions.allow` rules | Pre-approves specific bash commands (still useful as documentation, but redundant with the hook) |
+
+### Security Considerations
+
+**This configuration auto-approves everything.** Only use it when:
+- You trust the codebase and workflows
+- You're in a development environment (not production)
+- You want truly unattended execution
+
+For more selective auto-approval, you can customize the hook script:
+
+```bash
+#!/bin/bash
+# ~/.claude/selective-approve.sh
+
+# Read the permission request details from stdin
+read -r request
+
+# Auto-approve only specific patterns
+if echo "$request" | grep -qE "(npm run|git commit|\.claude/workflows)"; then
+  exit 0  # Approve
+else
+  exit 1  # Prompt user
+fi
+```
+
+Then reference it in your settings:
+```json
+{
+  "hooks": {
+    "PermissionRequest": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "command",
+        "command": "~/.claude/selective-approve.sh"
+      }]
+    }]
+  }
+}
+```
+
+### Does This Conflict with Plugin Hooks?
+
+No. The `PermissionRequest` hook is a separate event type from the hooks this plugin uses (`Stop`, `SubagentStop`, `SessionStart`, `PreCompact`, `PostToolUse`). They run independently.
+
 ## Example: Full Project Lifecycle
 
 ```bash

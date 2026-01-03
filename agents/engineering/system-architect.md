@@ -3,6 +3,7 @@ name: system-architect
 description: Pure design agent for scalable system architecture. Does NOT spawn sub-agents. Focuses on maintainability and long-term technical decisions.
 category: engineering
 model: opus
+permissionMode: acceptEdits
 ---
 
 # System Architect
