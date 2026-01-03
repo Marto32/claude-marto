@@ -1140,41 +1140,109 @@ This means you'll get prompted for every edit and bash command, even if you've p
 
 ### The Solution
 
-Add a `PermissionRequest` hook to your **target project's** `.claude/settings.local.json`:
+You need two things:
+1. **A script** that auto-approves permissions (stored at user level)
+2. **A hook config** that points to the script (can be user or project level)
+
+**Important:** The hook command must be a path to an executable script. Shell builtins like `exit 0` don't work directly.
+
+#### Step 1: Create the Auto-Approve Script
+
+Create this script at `~/.claude/auto-approve.sh`:
+
+```bash
+#!/bin/bash
+# Auto-approve all Claude Code permission requests
+# Location: ~/.claude/auto-approve.sh
+
+# Consume stdin (required - contains the permission request JSON)
+cat > /dev/null
+
+# Output JSON approval response
+cat << 'JSON'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PermissionRequest",
+    "decision": {
+      "behavior": "allow"
+    }
+  }
+}
+JSON
+
+exit 0
+```
+
+**Important:** The script must output the full JSON response format. Just `exit 0` alone is not sufficient.
+
+Make it executable:
+
+```bash
+mkdir -p ~/.claude
+cat > ~/.claude/auto-approve.sh << 'SCRIPT'
+#!/bin/bash
+cat > /dev/null
+cat << 'JSON'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PermissionRequest",
+    "decision": {
+      "behavior": "allow"
+    }
+  }
+}
+JSON
+exit 0
+SCRIPT
+chmod +x ~/.claude/auto-approve.sh
+```
+
+#### Step 2: Configure the Hook
+
+Add to your **project's** `.claude/settings.local.json`:
 
 ```json
 {
   "hooks": {
-    "PermissionRequest": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "exit 0"
-      }]
-    }]
-  },
-  "permissions": {
-    "defaultMode": "acceptEdits",
-    "allow": [
-      "Bash(npm run:*)",
-      "Bash(npm test:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Edit(.claude/workflows/**)",
-      "Write(.claude/workflows/**)"
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/auto-approve.sh"
+          }
+        ]
+      }
     ]
   }
 }
 ```
 
+**Note:** Replace `$HOME` with your actual home directory path (e.g., `/Users/yourname/.claude/auto-approve.sh`) if environment variable expansion doesn't work.
+
+#### Step 3: Restart Claude Code
+
+**Hooks are loaded at session start.** After changing settings, you must:
+- Quit and reopen Claude Code, OR
+- Run `/hooks` to verify the hook is registered
+
+### Where to Put the Hook Config
+
+| Location | Scope |
+|----------|-------|
+| `~/.claude/settings.json` | Applies to **all projects** |
+| `.claude/settings.local.json` | Applies to **this project only** |
+
+The script itself (`auto-approve.sh`) can stay at user level regardless of where the hook config lives.
+
 ### What This Does
 
-| Setting | Effect |
-|---------|--------|
-| `PermissionRequest` hook with `exit 0` | Auto-approves **ALL** permission requests (every edit, every bash command including `cat`, `ls`, `npm`, `git`, etc.) for both main session and subagents |
-| `defaultMode: "acceptEdits"` | Sets the main session to auto-accept file edits |
-| `permissions.allow` rules | Pre-approves specific bash commands (still useful as documentation, but redundant with the hook) |
+| Component | Effect |
+|-----------|--------|
+| `auto-approve.sh` script | Outputs JSON with `"behavior": "allow"`, which tells Claude Code to approve the permission |
+| `matcher: "*"` | Matches all permission requests (edits, bash, writes, etc.) |
+| Hook location | Determines which projects use auto-approval |
 
 ### Security Considerations
 
@@ -1183,37 +1251,62 @@ Add a `PermissionRequest` hook to your **target project's** `.claude/settings.lo
 - You're in a development environment (not production)
 - You want truly unattended execution
 
-For more selective auto-approval, you can customize the hook script:
+For more selective auto-approval, you can customize the script to inspect the request:
 
 ```bash
 #!/bin/bash
 # ~/.claude/selective-approve.sh
+# Receives JSON on stdin with tool_name, cwd, etc.
 
-# Read the permission request details from stdin
-read -r request
+# Read the permission request JSON from stdin
+request=$(cat)
 
-# Auto-approve only specific patterns
-if echo "$request" | grep -qE "(npm run|git commit|\.claude/workflows)"; then
-  exit 0  # Approve
-else
-  exit 1  # Prompt user
-fi
-```
+# Extract tool name from the JSON
+tool_name=$(echo "$request" | grep -o '"tool_name":"[^"]*"' | cut -d'"' -f4)
 
-Then reference it in your settings:
-```json
+# Decide based on tool
+case "$tool_name" in
+  Bash|Read|Write|Edit|Glob|Grep)
+    # Approve - must output JSON response
+    cat << 'JSON'
 {
-  "hooks": {
-    "PermissionRequest": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "~/.claude/selective-approve.sh"
-      }]
-    }]
+  "hookSpecificOutput": {
+    "hookEventName": "PermissionRequest",
+    "decision": {
+      "behavior": "allow"
+    }
   }
 }
+JSON
+    ;;
+  *)
+    # Deny - show prompt to user
+    cat << 'JSON'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PermissionRequest",
+    "decision": {
+      "behavior": "deny",
+      "message": "Tool not auto-approved"
+    }
+  }
+}
+JSON
+    ;;
+esac
+
+exit 0
 ```
+
+### VS Code Users
+
+If you're using Claude Code in VS Code, you also need to configure the VS Code extension:
+
+1. Open VS Code Settings (`Cmd+,` / `Ctrl+,`)
+2. Search for "Claude"
+3. Set **"Initial Permission Mode"** to `acceptEdits` or `bypassPermissions`
+
+The VS Code extension has its own permission UI that runs before CLI hooks.
 
 ### Does This Conflict with Plugin Hooks?
 
