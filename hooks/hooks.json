@@ -1,6 +1,18 @@
 {
   "description": "Claude-marto-toolkit workflow hooks for /cook and /spec command orchestration",
   "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/permission-request.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
